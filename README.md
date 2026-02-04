@@ -1,7 +1,7 @@
 
-  # Payment Successful Page
+  # TOOLBOX
 
-  This is a code bundle for Payment Successful Page. The original project is available at https://www.figma.com/design/gcZT1Nu8Y77nVDFo3jp2SW/Payment-Successful-Page.
+  This is a code bundle for TOOLBOX. The original project is available at https://www.figma.com/design/gcZT1Nu8Y77nVDFo3jp2SW/TOOLBOX.
 
   ## Running the code
 

@@ -1,0 +1,175 @@
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
+import { Upload, Check, Loader2, AlertCircle } from 'lucide-react';
+import { uploadImageToCloudinary, saveProjectToFirestore } from '../../utils/uploadService';
+
+export const AdminPage = () => {
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('Projects');
+  const [description, setDescription] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      setPreview(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file || !title || !description) {
+      alert("Please fill in all fields and select an image.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Upload to Cloudinary
+      const imageUrl = await uploadImageToCloudinary(file);
+
+      // 2. Save to Firebase
+      await saveProjectToFirestore({
+        title,
+        category,
+        description,
+        imageUrl,
+      });
+
+      alert("Upload Successful!");
+      
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setFile(null);
+      setPreview(null);
+      setCategory('Projects');
+
+    } catch (error) {
+      console.error(error);
+      alert("Upload Failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pt-32 px-6 pb-20">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100"
+      >
+        <div className="bg-black text-white p-8">
+          <h1 className="text-3xl font-light tracking-tight">Admin Upload</h1>
+          <p className="text-gray-400 text-sm mt-2 uppercase tracking-widest">
+            Add new content to portfolio
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          {/* Title Input */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Project Title</label>
+            <input 
+              type="text" 
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black outline-none transition-all"
+              placeholder="Enter project title..."
+            />
+          </div>
+
+          {/* Category Select */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Category</label>
+            <div className="relative">
+              <select 
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black outline-none appearance-none cursor-pointer transition-all"
+              >
+                <option value="Projects">Projects</option>
+                <option value="Activities">Activities</option>
+                <option value="Archive">Archive</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                ▼
+              </div>
+            </div>
+          </div>
+
+          {/* Description Textarea */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Description</label>
+            <textarea 
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black outline-none resize-none transition-all"
+              placeholder="Project description..."
+            />
+          </div>
+
+          {/* Image Upload */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Project Image</label>
+            <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${file ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-gray-400'}`}>
+              <input 
+                type="file" 
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden" 
+                id="file-upload"
+              />
+              <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-4">
+                {preview ? (
+                  <div className="relative w-full max-h-60 overflow-hidden rounded-lg shadow-sm">
+                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <span className="bg-white px-4 py-2 rounded-full text-xs font-bold uppercase shadow-lg">Change Image</span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-2">
+                      <Upload size={24} />
+                    </div>
+                    <div className="text-sm font-medium text-gray-600">Click to upload image</div>
+                    <div className="text-xs text-gray-400">JPG, PNG, GIF up to 10MB</div>
+                  </>
+                )}
+              </label>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className={`w-full py-4 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 ${
+              loading 
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                : 'bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl'
+            }`}
+          >
+            {loading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                Upload Project
+              </>
+            )}
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  );
+};

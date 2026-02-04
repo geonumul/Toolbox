@@ -15,6 +15,7 @@ import { SchedulePage } from './components/pages/SchedulePage';
 import { StudyPage } from './components/pages/StudyPage';
 import { TeamPage } from './components/pages/TeamPage';
 import { ArchivePage } from './components/pages/ArchivePage';
+import { AdminPage } from './components/pages/AdminPage';
 
 // Data Hook
 import { useData } from './utils/data';
@@ -39,6 +40,13 @@ function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [page]);
+
+  // Check URL for admin route
+  useEffect(() => {
+    if (window.location.pathname === '/admin') {
+      setPage('admin');
+    }
+  }, []);
 
   const handleUpdateConfig = (key: string, value: string) => {
     updateConfig({ [key]: value });
@@ -75,6 +83,8 @@ function App() {
         return <TeamPage data={data.team} updateData={updateData} isEditing={isEditing} />;
       case 'archive':
         return <ArchivePage data={data.archive} updateData={updateData} isEditing={isEditing} />;
+      case 'admin':
+        return <AdminPage />;
       case 'success':
         return <PaymentSuccess onGoHome={() => setPage('home')} onViewOrder={() => setPage('gallery')} />;
       default:
