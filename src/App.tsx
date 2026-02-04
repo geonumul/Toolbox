@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { IntroLoader } from './components/IntroLoader';
 import { Hero } from './components/Hero';
 import { Marquee } from './components/Marquee';
@@ -8,6 +8,10 @@ import { Header } from './components/Header';
 import { Recruitment } from './components/Recruitment';
 import { PaymentSuccess } from './components/PaymentSuccess';
 import { InboxModal } from './components/ui/InboxModal';
+
+// Firebase
+import { db } from './firebase';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 
 // Pages
 import { GalleryPage } from './components/pages/GalleryPage';
@@ -27,6 +31,33 @@ function App() {
   const { data, updateData, updateConfig } = useData();
 
   const [isInboxOpen, setIsInboxOpen] = useState(false);
+
+  // Firestore Data State
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
+
+  // Fetch Projects from Firestore
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const fetchedProjects = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setProjects(fetchedProjects);
+      } catch (error) {
+        console.error("Error fetching projects: ", error);
+        // Fallback to local data if firestore fails
+        setProjects([]); 
+      } finally {
+        setIsProjectsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   // Styling override
   useEffect(() => {
@@ -72,9 +103,21 @@ function App() {
   const renderPage = () => {
     switch(page) {
       case 'gallery':
-        return <GalleryPage data={data.gallery} initialTab="Projects" teamData={data.team} updateData={updateData} isEditing={isEditing} />;
+        return <GalleryPage 
+          data={projects.length > 0 ? projects : data.gallery} 
+          initialTab="Projects" 
+          teamData={data.team} 
+          updateData={updateData} 
+          isEditing={isEditing} 
+        />;
       case 'activities': 
-        return <GalleryPage data={data.gallery} initialTab="Activities" teamData={data.team} updateData={updateData} isEditing={isEditing} />;
+        return <GalleryPage 
+          data={projects.length > 0 ? projects : data.gallery} 
+          initialTab="Activities" 
+          teamData={data.team} 
+          updateData={updateData} 
+          isEditing={isEditing} 
+        />;
       case 'schedule':
         return <SchedulePage data={data.schedule} updateData={updateData} isEditing={isEditing} />;
       case 'study':

@@ -9,7 +9,7 @@ interface ProjectModalProps {
   onClose: () => void;
   isEditing?: boolean;
   teamData?: any[];
-  onUpdate?: (field: string, value: any) => void;
+  onUpdate?: (field: string | object, value?: any) => void;
   onSave?: () => void;
 }
 
@@ -53,7 +53,26 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
 
   const handleUpdate = (field: string, value: any) => {
     if (onUpdate) {
-      onUpdate(field, value);
+        // SYNC LOGIC for Text Inputs
+        if (field === 'image') {
+            // If image is updated, also update pdfUrl (Attachment) to match
+            onUpdate({
+                image: value,
+                pdfUrl: value
+            });
+        } else if (field === 'pdfUrl') {
+            // If pdfUrl is updated, also update image ONLY if it looks like an image URL
+            // (checking common extensions or raw blob/data uri, or simply trusting user intent as requested)
+            // The user said: "If I put a link on the right, left and right links should appear together"
+            // So we will sync it back to image as well.
+            onUpdate({
+                pdfUrl: value,
+                image: value
+            });
+        } else {
+            // Normal update for other fields
+            onUpdate(field, value);
+        }
     }
   };
 
@@ -64,18 +83,23 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
           try {
               // Upload to Cloudinary immediately
               const url = await uploadFileToCloudinary(file);
-              onUpdate(field, url);
               
               // SYNC LOGIC: Bidirectional syncing as requested
               if (field === 'image') {
                   // Left -> Right: If updating Main Image, ALWAYS update Attachment Link too
-                  // The user said "one upload... 2 linked"
-                  onUpdate('pdfUrl', url); 
+                  onUpdate({
+                      image: url,
+                      pdfUrl: url
+                  });
               } else if (field === 'pdfUrl') {
                   // Right -> Left: If updating Attachment Link, ONLY update Main Image if it is an image file
-                  // "Automatically mutually complementary"
                   if (file.type.startsWith('image/')) {
-                      onUpdate('image', url);
+                      onUpdate({
+                          pdfUrl: url,
+                          image: url
+                      });
+                  } else {
+                      onUpdate('pdfUrl', url);
                   }
               }
 

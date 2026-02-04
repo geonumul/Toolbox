@@ -57,10 +57,18 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
   };
 
   // Editing Handlers
-  const handleUpdateProject = (id: number, field: string, value: any) => {
+  const handleUpdateProject = (id: number, field: string | object, value?: any) => {
     if (!updateData) return;
+
+    let updates = {};
+    if (typeof field === 'string') {
+        updates = { [field]: value };
+    } else {
+        updates = field;
+    }
+
     const updatedGallery = data.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
+      item.id === id ? { ...item, ...updates } : item
     );
     updateData('gallery', updatedGallery);
   };
