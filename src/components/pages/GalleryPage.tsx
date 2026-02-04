@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ProjectModal } from '../ui/ProjectModal';
 import { X, Plus, Trash2 } from 'lucide-react';
-import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
 interface GalleryPageProps {
@@ -15,7 +15,7 @@ interface GalleryPageProps {
 
 export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], updateData, isEditing = false }: GalleryPageProps) => {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | number | null>(null);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
 
   // Derived state for the selected project to ensure it's always fresh from data
@@ -73,34 +73,56 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
     updateData('gallery', updatedGallery);
   };
 
-  const handleAddProject = () => {
-    if (!updateData) return;
-    const numberIds = data.map(m => m.id).filter(id => typeof id === 'number');
-    const newId = numberIds.length > 0 ? Math.max(...numberIds) + 1 : 1;
-    const newProject = {
-        id: newId,
-        title: "New Project",
-        type: activeTab,
-        author: "Author Name",
-        date: "2026.01.01",
-        image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-        description: "Project description..."
-    };
-    updateData('gallery', [...data, newProject]);
-    setSelectedProjectId(newId);
+  const handleAddProject = async () => {
+    // Directly create in Firestore
+    try {
+        const newProject = {
+            title: "New Project",
+            type: activeTab, // Use current tab type
+            author: "Author Name",
+            date: new Date().toISOString().split('T')[0].replace(/-/g, '.'),
+            image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+            description: "Project description...",
+            createdAt: new Date(),
+            site: "-",
+            detailContent: "",
+            pdfUrl: ""
+        };
+        
+        const docRef = await addDoc(collection(db, "projects"), newProject);
+        // Do not update local state manually; onSnapshot in App.tsx will handle it.
+        // We can try to open it immediately, but it might take a split second to appear in 'data' prop.
+        // Setting ID here will trigger modal once data arrives.
+        setSelectedProjectId(docRef.id as any); // Cast to any because state type might be number|null initially but Firestore IDs are strings
+    } catch (error) {
+        console.error("Error adding document: ", error);
+        alert("Failed to create project: " + error);
+    }
   };
 
-  const handleDeleteProject = (e: React.MouseEvent, id: number) => {
+  const handleDeleteProject = async (e: React.MouseEvent, id: string | number) => {
       e.stopPropagation();
-      if (!updateData) return;
-      if (confirm("Delete this project?")) {
-          const updatedGallery = data.filter(item => item.id !== id);
-          updateData('gallery', updatedGallery);
+      if (confirm("Delete this project? This cannot be undone.")) {
+          try {
+              // Assuming ID is string from Firestore. If it's a number (legacy local data), we can't delete from Firestore easily.
+              if (typeof id === 'string') {
+                  await deleteDoc(doc(db, "projects", id));
+              } else {
+                  // Fallback for local-only data (if any left)
+                  if (updateData) {
+                      const updatedGallery = data.filter(item => item.id !== id);
+                      updateData('gallery', updatedGallery);
+                  }
+              }
+          } catch (error) {
+              console.error("Error deleting document: ", error);
+              alert("Failed to delete project: " + error);
+          }
       }
   };
 
   const handleSaveProjectToDB = async (project: any) => {
-      // If project has a string ID (Firebase ID), update Firestore
+      // Logic simplified: We only update existing docs now since Add creates immediately
       if (typeof project.id === 'string') {
           try {
               const projectRef = doc(db, "projects", project.id);
@@ -115,37 +137,9 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                   detailContent: project.detailContent,
                   pdfUrl: project.pdfUrl
               });
-              // Success alert is handled in ProjectModal
           } catch (error) {
               console.error("Error updating document: ", error);
               alert("Failed to save to database: " + error);
-          }
-      } else {
-          // Local project: Create in Firestore
-          try {
-              // Remove temporary ID and save
-              const { id, ...projectData } = project;
-              
-              // Ensure critical fields are set
-              const dataToSave = {
-                  ...projectData,
-                  createdAt: new Date(),
-                  type: project.type || "Projects"
-              };
-
-              const docRef = await addDoc(collection(db, "projects"), dataToSave);
-              
-              // Update local state to replace temporary number ID with real Firestore ID
-              const updatedGallery = data.map(item => 
-                 item.id === id ? { ...item, id: docRef.id } : item
-              );
-              updateData('gallery', updatedGallery);
-              
-              // Success alert is handled in ProjectModal if we want, but here we can rely on it closing.
-              // Actually ProjectModal calls this then alerts.
-          } catch (error) {
-              console.error("Error adding document: ", error);
-              alert("Failed to create in database: " + error);
           }
       }
       setSelectedProjectId(null); // Close modal
@@ -255,16 +249,6 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                         className="group cursor-pointer flex flex-col h-full relative"
                         onClick={() => setSelectedProjectId(item.id)}
                     >
-                        {/* Delete Button */}
-                        {isEditing && (
-                            <button 
-                                onClick={(e) => handleDeleteProject(e, item.id)}
-                                className="absolute top-2 right-2 z-20 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        )}
-
                         <div className="overflow-hidden aspect-square bg-muted relative mb-4">
                             <img 
                                 src={item.image} 
@@ -286,6 +270,17 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                                 <span>{item.date || "2026.01.01"}</span>
                             </div>
                         </div>
+
+                        {/* Delete Button - Moved to end and high z-index to ensure clickability */}
+                        {isEditing && (
+                            <button 
+                                onClick={(e) => handleDeleteProject(e, item.id)}
+                                className="absolute top-2 right-2 z-50 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg hover:scale-110 active:scale-95"
+                                title="Delete Project"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        )}
                     </motion.div>
                 ))}
 
@@ -301,12 +296,12 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                 )}
             </div>
 
-            {filteredData.length === 0 && !isEditing && (
+            {filteredData.length === 0 && !isEditing ? (
                 <div className="text-center py-32 border-t border-b border-border">
                     <div className="text-4xl font-mono text-muted mb-2">NULL</div>
                     <div className="text-muted-foreground font-mono text-sm">NO DATA FOUND FOR SELECTED FILTERS</div>
                 </div>
-            )}
+            ) : null}
         </div>
         </motion.div>
         

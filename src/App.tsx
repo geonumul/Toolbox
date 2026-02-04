@@ -11,7 +11,7 @@ import { InboxModal } from './components/ui/InboxModal';
 
 // Firebase
 import { db } from './firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 // Pages
 import { GalleryPage } from './components/pages/GalleryPage';
@@ -38,25 +38,22 @@ function App() {
 
   // Fetch Projects from Firestore
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-        const fetchedProjects = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setProjects(fetchedProjects);
-      } catch (error) {
-        console.error("Error fetching projects: ", error);
-        // Fallback to local data if firestore fails
-        setProjects([]); 
-      } finally {
-        setIsProjectsLoading(false);
-      }
-    };
+    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    
+    // Use onSnapshot for real-time updates
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedProjects = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setProjects(fetchedProjects);
+      setIsProjectsLoading(false);
+    }, (error) => {
+      console.error("Error fetching projects: ", error);
+      setIsProjectsLoading(false);
+    });
 
-    fetchProjects();
+    return () => unsubscribe();
   }, []);
 
   // Styling override
