@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ExternalLink, Calendar, MapPin, FileText, Download, ArrowRight, Maximize2, Minimize2, ZoomIn, ZoomOut, Image as ImageIcon, Upload, Link as LinkIcon, RefreshCw } from 'lucide-react';
+import { X, ExternalLink, Calendar, MapPin, FileText, Download, ArrowRight, Maximize2, Minimize2, ZoomIn, ZoomOut, Image as ImageIcon, Upload, Link as LinkIcon, RefreshCw, Save } from 'lucide-react';
 import { EditableImage } from './EditableImage';
 import { EditableField } from './EditableField';
 
@@ -9,9 +9,10 @@ interface ProjectModalProps {
   onClose: () => void;
   isEditing?: boolean;
   onUpdate?: (field: string, value: any) => void;
+  onSave?: () => void;
 }
 
-export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate }: ProjectModalProps) => {
+export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, onSave }: ProjectModalProps) => {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -87,14 +88,18 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate }: 
 
     // Body Scroll Lock logic
   useEffect(() => {
-    // Lock scroll on mount
     document.body.style.overflow = 'hidden';
-    
-    // Unlock scroll on unmount
     return () => {
       document.body.style.overflow = '';
     };
   }, []);
+
+  const handleSaveClick = () => {
+      if(onSave) {
+          onSave();
+          alert("Project changes saved!");
+      }
+  };
 
   if (!project) return null;
 
@@ -303,9 +308,18 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate }: 
             <div className="p-6 border-t border-gray-100 bg-gray-50">
                  {isEditing ? (
                     <div className="flex flex-col gap-3">
-                         <label className="text-[10px] font-bold uppercase text-gray-400 flex items-center justify-between">
-                            <span>PDF Attachment</span>
-                         </label>
+                         <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold uppercase text-gray-400">
+                                PDF Attachment
+                            </label>
+                            {/* NEW SAVE BUTTON */}
+                            <button 
+                                onClick={handleSaveClick}
+                                className="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider hover:bg-blue-700 transition-colors flex items-center gap-1"
+                            >
+                                <Save size={12} /> Save Changes
+                            </button>
+                         </div>
                          
                          <div className="flex gap-2">
                              <div className="relative flex-1">

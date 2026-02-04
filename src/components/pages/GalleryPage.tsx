@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ProjectModal } from '../ui/ProjectModal';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 interface GalleryPageProps {
     data: any[];
@@ -61,7 +63,8 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
 
   const handleAddProject = () => {
     if (!updateData) return;
-    const newId = Math.max(...data.map(m => m.id), 0) + 1;
+    const numberIds = data.map(m => m.id).filter(id => typeof id === 'number');
+    const newId = numberIds.length > 0 ? Math.max(...numberIds) + 1 : 1;
     const newProject = {
         id: newId,
         title: "New Project",
@@ -72,6 +75,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
         description: "Project description..."
     };
     updateData('gallery', [...data, newProject]);
+    setSelectedProjectId(newId);
   };
 
   const handleDeleteProject = (e: React.MouseEvent, id: number) => {
@@ -81,6 +85,58 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
           const updatedGallery = data.filter(item => item.id !== id);
           updateData('gallery', updatedGallery);
       }
+  };
+
+  const handleSaveProjectToDB = async (project: any) => {
+      // If project has a string ID (Firebase ID), update Firestore
+      if (typeof project.id === 'string') {
+          try {
+              const projectRef = doc(db, "projects", project.id);
+              await updateDoc(projectRef, {
+                  title: project.title,
+                  type: project.type,
+                  description: project.description,
+                  author: project.author,
+                  image: project.image,
+                  site: project.site,
+                  date: project.date,
+                  detailContent: project.detailContent,
+                  pdfUrl: project.pdfUrl
+              });
+              // Success alert is handled in ProjectModal
+          } catch (error) {
+              console.error("Error updating document: ", error);
+              alert("Failed to save to database: " + error);
+          }
+      } else {
+          // Local project: Create in Firestore
+          try {
+              // Remove temporary ID and save
+              const { id, ...projectData } = project;
+              
+              // Ensure critical fields are set
+              const dataToSave = {
+                  ...projectData,
+                  createdAt: new Date(),
+                  type: project.type || "Projects"
+              };
+
+              const docRef = await addDoc(collection(db, "projects"), dataToSave);
+              
+              // Update local state to replace temporary number ID with real Firestore ID
+              const updatedGallery = data.map(item => 
+                 item.id === id ? { ...item, id: docRef.id } : item
+              );
+              updateData('gallery', updatedGallery);
+              
+              // Success alert is handled in ProjectModal if we want, but here we can rely on it closing.
+              // Actually ProjectModal calls this then alerts.
+          } catch (error) {
+              console.error("Error adding document: ", error);
+              alert("Failed to create in database: " + error);
+          }
+      }
+      setSelectedProjectId(null); // Close modal
   };
 
   return (
@@ -249,6 +305,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                     onClose={() => setSelectedProjectId(null)} 
                     isEditing={isEditing}
                     onUpdate={(field, val) => handleUpdateProject(selectedProject.id, field, val)}
+                    onSave={() => handleSaveProjectToDB(selectedProject)}
                 />
             )}
         </AnimatePresence>

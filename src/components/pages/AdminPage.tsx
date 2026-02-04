@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Upload, Check, Loader2, AlertCircle } from 'lucide-react';
-import { uploadImageToCloudinary, saveProjectToFirestore } from '../../utils/uploadService';
+import { uploadProjectToDB } from '../../utils/uploadService';
 
 export const AdminPage = () => {
   const [title, setTitle] = useState('');
@@ -29,20 +29,15 @@ export const AdminPage = () => {
     setLoading(true);
 
     try {
-      // 1. Upload to Cloudinary
-      const imageUrl = await uploadImageToCloudinary(file);
-
-      // 2. Save to Firebase
-      await saveProjectToFirestore({
+      // Use the new combined function for better error handling
+      await uploadProjectToDB({
         title,
         category,
         description,
-        imageUrl,
+        file
       });
-
-      alert("Upload Successful!");
       
-      // Reset form
+      // Reset form on success
       setTitle('');
       setDescription('');
       setFile(null);
@@ -50,8 +45,8 @@ export const AdminPage = () => {
       setCategory('Projects');
 
     } catch (error) {
-      console.error(error);
-      alert("Upload Failed. Please try again.");
+       // Error is already alerted in uploadProjectToDB
+       console.error("Form submission error:", error);
     } finally {
       setLoading(false);
     }
@@ -154,7 +149,7 @@ export const AdminPage = () => {
             className={`w-full py-4 rounded-lg font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-2 ${
               loading 
                 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                : 'bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl'
+                : 'bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl'
             }`}
           >
             {loading ? (
@@ -164,7 +159,8 @@ export const AdminPage = () => {
               </>
             ) : (
               <>
-                Upload Project
+                <Check size={20} />
+                Save Project
               </>
             )}
           </button>
