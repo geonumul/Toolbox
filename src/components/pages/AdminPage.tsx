@@ -1,43 +1,61 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Upload, Check, Loader2, AlertCircle } from 'lucide-react';
+import { Upload, Check, Loader2, AlertCircle, FileText } from 'lucide-react';
 import { uploadProjectToDB } from '../../utils/uploadService';
 
 export const AdminPage = () => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Projects');
   const [description, setDescription] = useState('');
+  
+  // 실제 업로드할 파일 객체 (DB 저장용)
   const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+  
+  // 화면에 보여줄 미리보기 URL (단순 표시용)
   const [preview, setPreview] = useState<string | null>(null);
+  
+  const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
+      
+      // 1. 파일 객체 저장 (업로드용)
       setFile(selectedFile);
+      
+      // 2. 미리보기 URL 생성 (표시용)
+      // 주의: 이 URL은 DB에 저장하면 안 됩니다.
       setPreview(URL.createObjectURL(selectedFile));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !title || !description) {
-      alert("Please fill in all fields and select an image.");
+    
+    // 유효성 검사
+    if (!file) {
+      alert("Please select a file to upload.");
+      return;
+    }
+    
+    if (!title || !description) {
+      alert("Please fill in all fields.");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Use the new combined function for better error handling
+      // 업로드 함수 호출
+      // 중요: preview(문자열)가 아니라 file(File 객체)을 전달합니다.
       await uploadProjectToDB({
         title,
         category,
         description,
-        file
+        file: file // 명시적으로 File 객체 전달
       });
       
-      // Reset form on success
+      // 성공 시 폼 초기화
       setTitle('');
       setDescription('');
       setFile(null);
@@ -45,7 +63,6 @@ export const AdminPage = () => {
       setCategory('Projects');
 
     } catch (error) {
-       // Error is already alerted in uploadProjectToDB
        console.error("Form submission error:", error);
     } finally {
       setLoading(false);
@@ -112,21 +129,27 @@ export const AdminPage = () => {
 
           {/* Image Upload */}
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Project Image</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Project File / Image</label>
             <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${file ? 'border-green-500 bg-green-50' : 'border-gray-300 hover:border-gray-400'}`}>
               <input 
                 type="file" 
                 onChange={handleFileChange}
-                accept="image/*"
                 className="hidden" 
                 id="file-upload"
               />
               <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-4">
                 {preview ? (
                   <div className="relative w-full max-h-60 overflow-hidden rounded-lg shadow-sm">
-                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                    {file && file.type.startsWith('image/') ? (
+                        <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-10 bg-gray-100 w-full">
+                            <FileText size={48} className="text-gray-400 mb-2" />
+                            <span className="text-sm font-bold text-gray-600">{file?.name}</span>
+                        </div>
+                    )}
                     <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <span className="bg-white px-4 py-2 rounded-full text-xs font-bold uppercase shadow-lg">Change Image</span>
+                      <span className="bg-white px-4 py-2 rounded-full text-xs font-bold uppercase shadow-lg">Change File</span>
                     </div>
                   </div>
                 ) : (
@@ -134,8 +157,8 @@ export const AdminPage = () => {
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-2">
                       <Upload size={24} />
                     </div>
-                    <div className="text-sm font-medium text-gray-600">Click to upload image</div>
-                    <div className="text-xs text-gray-400">JPG, PNG, GIF up to 10MB</div>
+                    <div className="text-sm font-medium text-gray-600">Click to upload file</div>
+                    <div className="text-xs text-gray-400">Any file format supported</div>
                   </>
                 )}
               </label>

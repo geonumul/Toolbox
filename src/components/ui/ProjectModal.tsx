@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ExternalLink, Calendar, MapPin, FileText, Download, ArrowRight, Maximize2, Minimize2, ZoomIn, ZoomOut, Image as ImageIcon, Upload, Link as LinkIcon, RefreshCw, Save } from 'lucide-react';
-import { EditableImage } from './EditableImage';
+import { uploadFileToCloudinary } from '../../utils/uploadService';
 import { EditableField } from './EditableField';
 
 interface ProjectModalProps {
@@ -14,6 +14,8 @@ interface ProjectModalProps {
 
 export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, onSave }: ProjectModalProps) => {
   const [scale, setScale] = useState(1);
+  const [isUploading, setIsUploading] = useState(false);
+  
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -54,11 +56,20 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, on
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, field: string = 'pdfUrl') => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: string = 'pdfUrl') => {
       const file = e.target.files?.[0];
       if (file && onUpdate) {
-          const url = URL.createObjectURL(file);
-          onUpdate(field, url);
+          setIsUploading(true);
+          try {
+              // Upload to Cloudinary immediately
+              const url = await uploadFileToCloudinary(file);
+              onUpdate(field, url);
+          } catch (error) {
+              console.error("Upload failed", error);
+              alert("File upload failed. Please try again.");
+          } finally {
+              setIsUploading(false);
+          }
       }
   };
 
@@ -169,7 +180,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, on
                         style={{
                              maxWidth: '100%',
                              maxHeight: '80vh',
-                        }}
+                         }}
                         draggable={false}
                     />
                 </div>
@@ -180,7 +191,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, on
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 border-t border-gray-200 z-20">
                     <div className="flex flex-col gap-2">
                          <label className="text-[10px] font-bold uppercase text-gray-500 flex items-center gap-2">
-                             <ImageIcon size={12} /> Update Project Image
+                             <ImageIcon size={12} /> Update Project Image / File
                          </label>
                          <div className="flex gap-2">
                             <input 
@@ -188,17 +199,17 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, on
                                 value={project.image}
                                 onChange={(e) => handleUpdate('image', e.target.value)}
                                 className="w-full bg-white border border-gray-300 p-2 text-xs rounded shadow-sm focus:border-black outline-none"
-                                placeholder="Paste new image URL here..."
+                                placeholder="Paste URL here..."
                             />
                             <label className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold uppercase cursor-pointer transition-colors whitespace-nowrap">
                                 <Upload size={14} />
                                 <input 
                                     type="file" 
-                                    accept="image/*" 
                                     className="hidden" 
                                     onChange={(e) => handleFileUpload(e, 'image')}
+                                    disabled={isUploading}
                                 />
-                                Upload
+                                {isUploading ? 'Uploading...' : 'Upload'}
                             </label>
                          </div>
                     </div>
@@ -310,7 +321,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, on
                     <div className="flex flex-col gap-3">
                          <div className="flex items-center justify-between">
                             <label className="text-[10px] font-bold uppercase text-gray-400">
-                                PDF Attachment
+                                Attachment (PDF, ZIP, etc)
                             </label>
                             {/* NEW SAVE BUTTON */}
                             <button 
@@ -337,7 +348,6 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, on
                                 <Upload size={14} />
                                 <input 
                                     type="file" 
-                                    accept=".pdf" 
                                     className="hidden" 
                                     onChange={(e) => handleFileUpload(e, 'pdfUrl')}
                                 />
@@ -345,7 +355,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, on
                              </label>
                          </div>
                          <p className="text-[10px] text-gray-400">
-                             {project.pdfUrl && project.pdfUrl.startsWith('blob:') ? 'File attached (Session only)' : 'Enter URL or upload file'}
+                             {project.pdfUrl && project.pdfUrl.startsWith('blob:') ? 'File attached (Session only)' : 'Enter URL or upload any file'}
                          </p>
                     </div>
                 ) : (
@@ -355,7 +365,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, on
                         rel="noreferrer"
                         className={`w-full py-3 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all rounded flex items-center justify-center gap-2 group ${(!project.pdfUrl || project.pdfUrl === '#') ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
                     >
-                        <span>Download / View PDF</span>
+                        <span>Download / View File</span>
                         <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </a>
                 )}
