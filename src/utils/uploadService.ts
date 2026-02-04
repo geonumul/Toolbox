@@ -2,8 +2,18 @@ import axios from 'axios';
 import { db } from '../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
-const CLOUD_NAME = "dv0lchvg7";
-const UPLOAD_PRESET = "TOOLBOX";
+const getEnvVar = () => {
+  try {
+    // @ts-ignore
+    return import.meta.env || {};
+  } catch {
+    return {};
+  }
+};
+
+const env = getEnvVar();
+const CLOUD_NAME = env.VITE_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = env.VITE_CLOUDINARY_PRESET;
 
 export interface ProjectData {
   title: string;
@@ -17,6 +27,11 @@ export interface ProjectData {
  * Uploads a file to Cloudinary and returns the secure URL.
  */
 export const uploadFileToCloudinary = async (file: File): Promise<string> => {
+  if (!CLOUD_NAME || !UPLOAD_PRESET) {
+    console.error("Cloudinary config missing:", { CLOUD_NAME, UPLOAD_PRESET });
+    throw new Error("Missing Cloudinary configuration. Please check your .env file.");
+  }
+
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', UPLOAD_PRESET);
