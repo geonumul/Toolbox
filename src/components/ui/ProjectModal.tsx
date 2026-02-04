@@ -8,11 +8,12 @@ interface ProjectModalProps {
   project: any;
   onClose: () => void;
   isEditing?: boolean;
+  teamData?: any[];
   onUpdate?: (field: string, value: any) => void;
   onSave?: () => void;
 }
 
-export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, onSave }: ProjectModalProps) => {
+export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [], onUpdate, onSave }: ProjectModalProps) => {
   const [scale, setScale] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -251,11 +252,30 @@ export const ProjectModal = ({ project, onClose, isEditing = false, onUpdate, on
                     </h2>
                     
                     <div className="text-sm font-mono text-gray-500 mb-6">
-                        <EditableField
-                            value={project.author || "Unknown"}
-                            onSave={(val) => handleUpdate('author', val)}
-                            isEditing={isEditing}
-                        />
+                        {isEditing ? (
+                            <div className="relative">
+                                <select
+                                    value={project.author || ""}
+                                    onChange={(e) => handleUpdate('author', e.target.value)}
+                                    className="w-full bg-black/5 outline-none rounded px-2 py-1 -mx-1 border border-transparent focus:border-blue-500/30 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="" disabled>Select Author</option>
+                                    {teamData && teamData.length > 0 ? (
+                                        teamData.map((member: any) => (
+                                            <option key={member.id} value={member.name}>{member.name}</option>
+                                        ))
+                                    ) : (
+                                        // Fallback if no team data
+                                        ["Ko Geon", "Park Kyeong-jun", "Yoo Seung-min", "Ryu Hyun-jung", "Yang Hyung-seok", "Kwon Si-hyun", "Kim Ji-eun", "Shim Jung-eun", "Kim Do-kyeong", "Admin"].map(name => (
+                                            <option key={name} value={name}>{name}</option>
+                                        ))
+                                    )}
+                                </select>
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
+                            </div>
+                        ) : (
+                            project.author || "Unknown"
+                        )}
                     </div>
 
                      <div className="border-b border-gray-100 pb-6 mb-6">

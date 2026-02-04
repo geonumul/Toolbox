@@ -304,6 +304,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                     project={selectedProject} 
                     onClose={() => setSelectedProjectId(null)} 
                     isEditing={isEditing}
+                    teamData={teamData}
                     onUpdate={(field, val) => handleUpdateProject(selectedProject.id, field, val)}
                     onSave={() => handleSaveProjectToDB(selectedProject)}
                 />
