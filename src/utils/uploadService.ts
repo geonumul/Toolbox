@@ -65,7 +65,8 @@ export const uploadProjectToDB = async ({ title, category, author, description, 
     date: new Date().toISOString().split('T')[0].replace(/-/g, '.'), // Format: YYYY.MM.DD
     author: author, // User selected author
     site: "-", 
-    detailContent: "" // Empty detail content initially
+    detailContent: "", // Empty detail content initially
+    pdfUrl: fileUrl // Automatically link the uploaded file/image to the attachment URL
   });
 
   return { id: docRef.id, url: fileUrl };

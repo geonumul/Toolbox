@@ -65,6 +65,20 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
               // Upload to Cloudinary immediately
               const url = await uploadFileToCloudinary(file);
               onUpdate(field, url);
+              
+              // SYNC LOGIC: Bidirectional syncing as requested
+              if (field === 'image') {
+                  // Left -> Right: If updating Main Image, ALWAYS update Attachment Link too
+                  // The user said "one upload... 2 linked"
+                  onUpdate('pdfUrl', url); 
+              } else if (field === 'pdfUrl') {
+                  // Right -> Left: If updating Attachment Link, ONLY update Main Image if it is an image file
+                  // "Automatically mutually complementary"
+                  if (file.type.startsWith('image/')) {
+                      onUpdate('image', url);
+                  }
+              }
+
           } catch (error) {
               console.error("Upload failed", error);
               alert("File upload failed. Please try again.");

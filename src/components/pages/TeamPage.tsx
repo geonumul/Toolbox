@@ -151,10 +151,13 @@ export const TeamPage = ({
   );
 };
 
+import { uploadFileToCloudinary } from '../../utils/uploadService';
+
 // Internal Component for Modal Logic
 const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, onClose: () => void, isAdmin: boolean, onSave: (data: any) => void }) => {
     const [isLocalEditing, setIsLocalEditing] = useState(false);
     const [formData, setFormData] = useState(member);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Reset form data when member changes
     useEffect(() => {
@@ -165,11 +168,20 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
         setFormData((prev: any) => ({ ...prev, [field]: value }));
     };
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const url = URL.createObjectURL(file);
-            handleChange('image', url);
+            setIsUploading(true);
+            try {
+                // Upload to Cloudinary
+                const url = await uploadFileToCloudinary(file);
+                handleChange('image', url);
+            } catch (error) {
+                console.error("Upload failed", error);
+                alert("Image upload failed. Please try again.");
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
@@ -265,16 +277,18 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                     className="text-[10px] w-32 outline-none px-2 py-1"
                                     placeholder="Image URL..."
                                     />
-                                    <label className="cursor-pointer hover:text-blue-500 transition-colors">
+                                    <label className={`cursor-pointer ${isUploading ? 'text-gray-400 cursor-not-allowed' : 'hover:text-blue-500'} transition-colors`}>
                                         <Upload size={14} />
                                         <input 
                                             type="file" 
                                             accept="image/*" 
                                             className="hidden" 
                                             onChange={handleFileUpload}
+                                            disabled={isUploading}
                                         />
                                     </label>
                             </div>
+                            {isUploading && <span className="text-[10px] text-white font-bold animate-pulse">Uploading...</span>}
                             <div className="w-full px-8 space-y-2 mt-4">
                                 <input 
                                     type="text" 
