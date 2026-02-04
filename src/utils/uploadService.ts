@@ -5,20 +5,6 @@ import { collection, addDoc } from 'firebase/firestore';
 const CLOUD_NAME = "dv0lchvg7";
 const UPLOAD_PRESET = "TOOLBOX";
 
-// Helper function to upload file to Cloudinary
-export const uploadFileToCloudinary = async (file: File) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', UPLOAD_PRESET);
-  
-  const res = await axios.post(
-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
-    formData
-  );
-  
-  return res.data.secure_url;
-};
-
 export interface ProjectData {
   title: string;
   category: string;
@@ -26,30 +12,45 @@ export interface ProjectData {
   file: File;
 }
 
-export const uploadProjectToDB = async ({ title, category, description, file }: ProjectData) => {
+/**
+ * Uploads a file to Cloudinary and returns the secure URL.
+ */
+export const uploadFileToCloudinary = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', UPLOAD_PRESET);
+  
   try {
-    console.log("🚀 업로드 시작...");
-    
-    // 1. Upload to Cloudinary
-    const imageUrl = await uploadFileToCloudinary(file);
-    console.log("📸 이미지 주소 획득:", imageUrl);
-
-    // 2. Save to Firebase
-    console.log("💾 DB 저장 시도 중...");
-    await addDoc(collection(db, "projects"), {
-      title,
-      category,
-      description,
-      img: imageUrl, // Save the Cloudinary URL, not blob
-      createdAt: new Date()
-    });
-
-    alert("🎉 성공! 이제 파이어베이스 새로고침 해보세요!");
-    return { success: true, url: imageUrl };
-
-  } catch (error: any) {
-    console.error("🚨 에러 발생:", error);
-    alert("🚨 실패! 원인: " + (error.message || error));
-    throw error;
+    const res = await axios.post(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
+      formData
+    );
+    return res.data.secure_url;
+  } catch (error) {
+    throw new Error("Failed to upload file to Cloudinary.");
   }
+};
+
+/**
+ * Uploads project image/file to Cloudinary and saves project metadata to Firestore.
+ */
+export const uploadProjectToDB = async ({ title, category, description, file }: ProjectData) => {
+  // 1. Upload file to Cloudinary
+  const fileUrl = await uploadFileToCloudinary(file);
+
+  // 2. Save metadata to Firestore
+  // We include default fields to match the existing schema
+  const docRef = await addDoc(collection(db, "projects"), {
+    title,
+    type: category, // Map category to 'type' field
+    description,
+    image: fileUrl, // Use 'image' key for consistency with GalleryPage
+    createdAt: new Date(),
+    date: new Date().toISOString().split('T')[0].replace(/-/g, '.'), // Format: YYYY.MM.DD
+    author: "Admin", // Default author
+    site: "-", 
+    detailContent: "" // Empty detail content initially
+  });
+
+  return { id: docRef.id, url: fileUrl };
 };

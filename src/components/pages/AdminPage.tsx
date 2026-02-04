@@ -1,69 +1,82 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Upload, Check, Loader2, AlertCircle, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Upload, Check, Loader2, FileText, XCircle } from 'lucide-react';
 import { uploadProjectToDB } from '../../utils/uploadService';
 
+// Simple notification type
+type NotificationStatus = {
+  type: 'success' | 'error';
+  message: string;
+} | null;
+
 export const AdminPage = () => {
+  // Form State
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Projects');
   const [description, setDescription] = useState('');
   
-  // 실제 업로드할 파일 객체 (DB 저장용)
+  // File State
   const [file, setFile] = useState<File | null>(null);
-  
-  // 화면에 보여줄 미리보기 URL (단순 표시용)
   const [preview, setPreview] = useState<string | null>(null);
   
+  // UI State
   const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState<NotificationStatus>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      
-      // 1. 파일 객체 저장 (업로드용)
       setFile(selectedFile);
-      
-      // 2. 미리보기 URL 생성 (표시용)
-      // 주의: 이 URL은 DB에 저장하면 안 됩니다.
       setPreview(URL.createObjectURL(selectedFile));
+      setNotification(null); // Clear previous errors if any
     }
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setFile(null);
+    setPreview(null);
+    setCategory('Projects');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setNotification(null);
     
-    // 유효성 검사
+    // Basic Validation
     if (!file) {
-      alert("Please select a file to upload.");
+      setNotification({ type: 'error', message: "Please select a file to upload." });
       return;
     }
     
-    if (!title || !description) {
-      alert("Please fill in all fields.");
+    if (!title.trim() || !description.trim()) {
+      setNotification({ type: 'error', message: "Please fill in all required fields." });
       return;
     }
 
     setLoading(true);
 
     try {
-      // 업로드 함수 호출
-      // 중요: preview(문자열)가 아니라 file(File 객체)을 전달합니다.
       await uploadProjectToDB({
         title,
         category,
         description,
-        file: file // 명시적으로 File 객체 전달
+        file
       });
       
-      // 성공 시 폼 초기화
-      setTitle('');
-      setDescription('');
-      setFile(null);
-      setPreview(null);
-      setCategory('Projects');
+      setNotification({ type: 'success', message: "Project successfully published." });
+      resetForm();
 
-    } catch (error) {
-       console.error("Form submission error:", error);
+      // Auto-dismiss success message after 3 seconds
+      setTimeout(() => setNotification(null), 3000);
+
+    } catch (error: any) {
+       console.error(error);
+       setNotification({ 
+         type: 'error', 
+         message: error.message || "An unexpected error occurred." 
+       });
     } finally {
       setLoading(false);
     }
@@ -84,6 +97,25 @@ export const AdminPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          {/* Notification Banner */}
+          <AnimatePresence>
+            {notification && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className={`flex items-center gap-3 p-4 rounded-lg text-sm font-medium ${
+                  notification.type === 'success' 
+                    ? 'bg-green-50 text-green-700 border border-green-200' 
+                    : 'bg-red-50 text-red-700 border border-red-200'
+                }`}
+              >
+                {notification.type === 'success' ? <Check size={18} /> : <XCircle size={18} />}
+                {notification.message}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Title Input */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Project Title</label>
@@ -178,12 +210,12 @@ export const AdminPage = () => {
             {loading ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                Uploading...
+                Processing...
               </>
             ) : (
               <>
                 <Check size={20} />
-                Save Project
+                Publish Project
               </>
             )}
           </button>
