@@ -74,10 +74,10 @@ export const AdminPage = ({ teamData = [] }: AdminPageProps) => {
 
     try {
       await uploadProjectToDB({
-        title,
+        title: title.trim(),
         category,
-        author,
-        description,
+        author: author.trim(),
+        description: description.trim(),
         file
       });
       

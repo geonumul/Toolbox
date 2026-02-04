@@ -21,9 +21,9 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
   // Derived state for the selected project to ensure it's always fresh from data
   const selectedProject = selectedProjectId ? data.find(p => p.id === selectedProjectId) : null;
 
-  // Generate authors list from teamData or fallback
+    // Generate authors list from teamData or fallback
   const authorsList = teamData && teamData.length > 0
-    ? teamData.map((m: any) => m.name)
+    ? teamData.map((m: any) => m.name.trim())
     : ["Ko Geon", "Park Kyeong-jun", "Yoo Seung-min"];
 
   // Update active tab when prop changes
@@ -36,7 +36,11 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
   // Filter Logic
   const filteredData = data.filter(item => {
       const matchesTab = item.type === activeTab;
-      const matchesAuthor = selectedAuthors.length === 0 || (item.author && selectedAuthors.includes(item.author));
+      
+      // Normalize author strings for comparison to avoid whitespace issues
+      const itemAuthor = item.author ? String(item.author).trim() : "";
+      const matchesAuthor = selectedAuthors.length === 0 || selectedAuthors.some(sa => sa.trim() === itemAuthor);
+      
       return matchesTab && matchesAuthor;
   });
 

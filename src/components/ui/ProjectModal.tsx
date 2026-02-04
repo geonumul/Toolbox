@@ -256,13 +256,13 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                             <div className="relative">
                                 <select
                                     value={project.author || ""}
-                                    onChange={(e) => handleUpdate('author', e.target.value)}
+                                    onChange={(e) => handleUpdate('author', e.target.value.trim())}
                                     className="w-full bg-black/5 outline-none rounded px-2 py-1 -mx-1 border border-transparent focus:border-blue-500/30 transition-all appearance-none cursor-pointer"
                                 >
                                     <option value="" disabled>Select Author</option>
                                     {teamData && teamData.length > 0 ? (
                                         teamData.map((member: any) => (
-                                            <option key={member.id} value={member.name}>{member.name}</option>
+                                            <option key={member.id} value={member.name.trim()}>{member.name}</option>
                                         ))
                                     ) : (
                                         // Fallback if no team data
