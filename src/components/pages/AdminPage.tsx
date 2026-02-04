@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Upload, Check, Loader2, FileText, XCircle } from 'lucide-react';
 import { uploadProjectToDB } from '../../utils/uploadService';
@@ -9,10 +9,15 @@ type NotificationStatus = {
   message: string;
 } | null;
 
-export const AdminPage = () => {
+interface AdminPageProps {
+  teamData?: any[];
+}
+
+export const AdminPage = ({ teamData = [] }: AdminPageProps) => {
   // Form State
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Projects');
+  const [author, setAuthor] = useState('');
   const [description, setDescription] = useState('');
   
   // File State
@@ -22,6 +27,15 @@ export const AdminPage = () => {
   // UI State
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<NotificationStatus>(null);
+
+  // Set default author if team data exists
+  useEffect(() => {
+    if (teamData && teamData.length > 0 && !author) {
+      setAuthor(teamData[0].name);
+    } else if (!author) {
+        setAuthor("Admin");
+    }
+  }, [teamData, author]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -38,6 +52,7 @@ export const AdminPage = () => {
     setFile(null);
     setPreview(null);
     setCategory('Projects');
+    // Don't reset author to keep the last selected one or default
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,7 +65,7 @@ export const AdminPage = () => {
       return;
     }
     
-    if (!title.trim() || !description.trim()) {
+    if (!title.trim() || !description.trim() || !author.trim()) {
       setNotification({ type: 'error', message: "Please fill in all required fields." });
       return;
     }
@@ -61,6 +76,7 @@ export const AdminPage = () => {
       await uploadProjectToDB({
         title,
         category,
+        author,
         description,
         file
       });
@@ -128,22 +144,47 @@ export const AdminPage = () => {
             />
           </div>
 
-          {/* Category Select */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Category</label>
-            <div className="relative">
-              <select 
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black outline-none appearance-none cursor-pointer transition-all"
-              >
-                <option value="Projects">Projects</option>
-                <option value="Activities">Activities</option>
-                <option value="Archive">Archive</option>
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                ▼
-              </div>
+          <div className="grid grid-cols-2 gap-6">
+            {/* Category Select */}
+            <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Category</label>
+                <div className="relative">
+                <select 
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black outline-none appearance-none cursor-pointer transition-all"
+                >
+                    <option value="Projects">Projects</option>
+                    <option value="Activities">Activities</option>
+                    <option value="Archive">Archive</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    ▼
+                </div>
+                </div>
+            </div>
+
+            {/* Author Select */}
+            <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Author</label>
+                <div className="relative">
+                <select 
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black outline-none appearance-none cursor-pointer transition-all"
+                >
+                    {teamData && teamData.length > 0 ? (
+                        teamData.map((member: any) => (
+                            <option key={member.id} value={member.name}>{member.name}</option>
+                        ))
+                    ) : (
+                        <option value="Admin">Admin</option>
+                    )}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    ▼
+                </div>
+                </div>
             </div>
           </div>
 

@@ -40,6 +40,21 @@ export const EditableField = ({
     }
   };
 
+  const handleFocus = () => {
+    // If the content matches the placeholder or specific default texts, clear it on focus
+    const defaults = [
+        "Project Detail Description...", 
+        "Add detailed project description here...",
+        "Project description...",
+        "New Project",
+        "Author Name",
+        "Projects"
+    ];
+    if (defaults.includes(localValue)) {
+        setLocalValue("");
+    }
+  };
+
   if (isEditing) {
     if (multiline) {
       return (
@@ -48,6 +63,7 @@ export const EditableField = ({
           value={localValue}
           onChange={(e) => setLocalValue(e.target.value)}
           onBlur={handleBlur}
+          onFocus={handleFocus}
           placeholder={placeholder}
           className={`w-full bg-black/5 outline-none resize-none overflow-hidden rounded px-1 -mx-1 border border-transparent focus:border-blue-500/30 transition-all ${className}`}
           rows={1}
@@ -60,6 +76,7 @@ export const EditableField = ({
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         onBlur={handleBlur}
+        onFocus={handleFocus}
         placeholder={placeholder}
         className={`w-full bg-black/5 outline-none rounded px-1 -mx-1 border border-transparent focus:border-blue-500/30 transition-all ${className}`}
       />

@@ -84,7 +84,7 @@ function App() {
       case 'archive':
         return <ArchivePage data={data.archive} updateData={updateData} isEditing={isEditing} />;
       case 'admin':
-        return <AdminPage />;
+        return <AdminPage teamData={data.team} />;
       case 'success':
         return <PaymentSuccess onGoHome={() => setPage('home')} onViewOrder={() => setPage('gallery')} />;
       default:

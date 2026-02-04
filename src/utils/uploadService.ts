@@ -8,6 +8,7 @@ const UPLOAD_PRESET = "TOOLBOX";
 export interface ProjectData {
   title: string;
   category: string;
+  author: string;
   description: string;
   file: File;
 }
@@ -34,7 +35,7 @@ export const uploadFileToCloudinary = async (file: File): Promise<string> => {
 /**
  * Uploads project image/file to Cloudinary and saves project metadata to Firestore.
  */
-export const uploadProjectToDB = async ({ title, category, description, file }: ProjectData) => {
+export const uploadProjectToDB = async ({ title, category, author, description, file }: ProjectData) => {
   // 1. Upload file to Cloudinary
   const fileUrl = await uploadFileToCloudinary(file);
 
@@ -47,7 +48,7 @@ export const uploadProjectToDB = async ({ title, category, description, file }: 
     image: fileUrl, // Use 'image' key for consistency with GalleryPage
     createdAt: new Date(),
     date: new Date().toISOString().split('T')[0].replace(/-/g, '.'), // Format: YYYY.MM.DD
-    author: "Admin", // Default author
+    author: author, // User selected author
     site: "-", 
     detailContent: "" // Empty detail content initially
   });
