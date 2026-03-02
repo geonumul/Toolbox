@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2 } from 'lucide-react';
 import { EditableField } from '../ui/EditableField';
+import { db } from '../../firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
 interface StudyPageProps {
     data: any[];
@@ -24,31 +26,53 @@ export const StudyPage = ({ data, updateData, isEditing = false }: StudyPageProp
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleUpdateLog = (id: number, field: string, value: string) => {
-      if (!updateData) return;
-      const updated = data.map(log => log.id === id ? { ...log, [field]: value } : log);
-      updateData('study', updated);
+  // Firestore update
+  const handleUpdateLog = async (id: string | number, field: string, value: string) => {
+      if (typeof id === 'string') {
+          try {
+              const logRef = doc(db, "studylogs", id);
+              await updateDoc(logRef, { [field]: value });
+          } catch (error) {
+              console.error("Error updating study log: ", error);
+          }
+      } else {
+          if (!updateData) return;
+          const updated = data.map(log => log.id === id ? { ...log, [field]: value } : log);
+          updateData('study', updated);
+      }
   };
 
-  const handleAddLog = () => {
-      if (!updateData) return;
-      const newId = Math.max(0, ...data.map(d => d.id)) + 1;
-      const newLog = {
-          id: newId,
-          week: `WEEK ${data.length + 1}`,
-          date: new Date().toISOString().split('T')[0],
-          title: "New Study Log",
-          content: "Description of the study session...",
-          tags: ["New"]
-      };
-      // Add to beginning of list
-      updateData('study', [newLog, ...data]);
+  // Firestore add
+  const handleAddLog = async () => {
+      try {
+          await addDoc(collection(db, "studylogs"), {
+              week: `WEEK ${data.length + 1}`,
+              date: new Date().toISOString().split('T')[0],
+              title: "New Study Log",
+              content: "Description of the study session...",
+              tags: ["New"],
+              createdAt: new Date()
+          });
+      } catch (error) {
+          console.error("Error adding study log: ", error);
+          alert("Failed to add study log: " + error);
+      }
   };
 
-  const handleDeleteLog = (id: number) => {
-      if (!updateData) return;
+  // Firestore delete
+  const handleDeleteLog = async (id: string | number) => {
       if (window.confirm("Delete this study log?")) {
-          updateData('study', data.filter(d => d.id !== id));
+          if (typeof id === 'string') {
+              try {
+                  await deleteDoc(doc(db, "studylogs", id));
+              } catch (error) {
+                  console.error("Error deleting study log: ", error);
+                  alert("Failed to delete study log: " + error);
+              }
+          } else {
+              if (!updateData) return;
+              updateData('study', data.filter(d => d.id !== id));
+          }
       }
   };
 

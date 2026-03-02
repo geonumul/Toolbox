@@ -938,10 +938,6 @@
     height: 80vh;
   }
 
-  .h-\[550px\] {
-    height: 550px;
-  }
-
   .h-full {
     height: 100%;
   }
@@ -1056,10 +1052,6 @@
 
   .max-w-\[320px\] {
     max-width: 320px;
-  }
-
-  .max-w-\[950px\] {
-    max-width: 950px;
   }
 
   .max-w-\[1400px\] {
@@ -1364,10 +1356,6 @@
 
   .rounded-lg {
     border-radius: var(--radius);
-  }
-
-  .rounded-none {
-    border-radius: 0;
   }
 
   .rounded-sm {

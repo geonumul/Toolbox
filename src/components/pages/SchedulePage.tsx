@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { EditableField } from '../ui/EditableField';
+import { db } from '../../firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
 interface SchedulePageProps {
     data: any[];
@@ -12,7 +14,7 @@ interface SchedulePageProps {
 export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePageProps) => {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); 
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date(2026, 1, 3)); 
-  const [highlightedEventId, setHighlightedEventId] = useState<number | null>(null);
+  const [highlightedEventId, setHighlightedEventId] = useState<string | number | null>(null);
 
   const eventRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   
@@ -69,31 +71,55 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
       }
   };
 
-  const handleUpdateEvent = (id: number, field: string, value: string) => {
-      if (!updateData) return;
-      const updated = data.map(ev => ev.id === id ? { ...ev, [field]: value } : ev);
-      updateData('schedule', updated);
+  // Firestore update
+  const handleUpdateEvent = async (id: string | number, field: string, value: string) => {
+      if (typeof id === 'string') {
+          try {
+              const eventRef = doc(db, "schedules", id);
+              await updateDoc(eventRef, { [field]: value });
+          } catch (error) {
+              console.error("Error updating schedule: ", error);
+          }
+      } else {
+          // Fallback for local data
+          if (!updateData) return;
+          const updated = data.map(ev => ev.id === id ? { ...ev, [field]: value } : ev);
+          updateData('schedule', updated);
+      }
   };
 
-  const handleAddEvent = () => {
-    if (!updateData) return;
-    const newId = Math.max(0, ...data.map(e => e.id)) + 1;
-    const newEvent = {
-        id: newId,
-        date: new Date().toISOString().split('T')[0],
-        title: "New Event",
-        description: "Event description...",
-        time: "10:00 AM",
-        location: "Online"
-    };
-    updateData('schedule', [...data, newEvent]);
+  // Firestore add
+  const handleAddEvent = async () => {
+      try {
+          await addDoc(collection(db, "schedules"), {
+              date: new Date().toISOString().split('T')[0],
+              title: "New Event",
+              description: "Event description...",
+              time: "10:00 AM",
+              location: "Online",
+              createdAt: new Date()
+          });
+      } catch (error) {
+          console.error("Error adding schedule: ", error);
+          alert("Failed to add event: " + error);
+      }
   };
 
-  const handleDeleteEvent = (id: number, e: React.MouseEvent) => {
+  // Firestore delete
+  const handleDeleteEvent = async (id: string | number, e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!updateData) return;
       if (window.confirm("Delete this event?")) {
-          updateData('schedule', data.filter(ev => ev.id !== id));
+          if (typeof id === 'string') {
+              try {
+                  await deleteDoc(doc(db, "schedules", id));
+              } catch (error) {
+                  console.error("Error deleting schedule: ", error);
+                  alert("Failed to delete event: " + error);
+              }
+          } else {
+              if (!updateData) return;
+              updateData('schedule', data.filter(ev => ev.id !== id));
+          }
       }
   };
 

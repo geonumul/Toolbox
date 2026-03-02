@@ -17,9 +17,13 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
   const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedProjectId, setSelectedProjectId] = useState<string | number | null>(null);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+  
+  // Local edit buffer for tracking changes before saving to Firestore
+  const [editBuffer, setEditBuffer] = useState<Record<string, any>>({});
 
-  // Derived state for the selected project to ensure it's always fresh from data
-  const selectedProject = selectedProjectId ? data.find(p => p.id === selectedProjectId) : null;
+  // Derived state for the selected project - merge with edit buffer
+  const rawSelectedProject = selectedProjectId ? data.find(p => p.id === selectedProjectId) : null;
+  const selectedProject = rawSelectedProject ? { ...rawSelectedProject, ...editBuffer } : null;
 
     // Generate authors list from teamData or fallback
   const authorsList = teamData && teamData.length > 0
@@ -56,21 +60,16 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
       setSelectedAuthors([]);
   };
 
-  // Editing Handlers
+  // Editing Handlers - now stores edits in local buffer instead of trying to update Firestore data
   const handleUpdateProject = (id: number, field: string | object, value?: any) => {
-    if (!updateData) return;
-
-    let updates = {};
+    let updates: Record<string, any> = {};
     if (typeof field === 'string') {
         updates = { [field]: value };
     } else {
         updates = field;
     }
-
-    const updatedGallery = data.map(item => 
-      item.id === id ? { ...item, ...updates } : item
-    );
-    updateData('gallery', updatedGallery);
+    // Store in local edit buffer
+    setEditBuffer(prev => ({ ...prev, ...updates }));
   };
 
   const handleAddProject = async () => {
@@ -122,11 +121,11 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
   };
 
   const handleSaveProjectToDB = async (project: any) => {
-      // Logic simplified: We only update existing docs now since Add creates immediately
       if (typeof project.id === 'string') {
           try {
               const projectRef = doc(db, "projects", project.id);
-              await updateDoc(projectRef, {
+              // Use the merged project data (original + editBuffer)
+              const dataToSave: Record<string, any> = {
                   title: project.title,
                   type: project.type,
                   description: project.description,
@@ -136,13 +135,20 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                   date: project.date,
                   detailContent: project.detailContent,
                   pdfUrl: project.pdfUrl
+              };
+              // Remove undefined values
+              Object.keys(dataToSave).forEach(key => {
+                  if (dataToSave[key] === undefined) delete dataToSave[key];
               });
+              await updateDoc(projectRef, dataToSave);
           } catch (error) {
               console.error("Error updating document: ", error);
               alert("Failed to save to database: " + error);
           }
       }
-      setSelectedProjectId(null); // Close modal
+      // Clear edit buffer and close modal
+      setEditBuffer({});
+      setSelectedProjectId(null);
   };
 
   return (
@@ -309,7 +315,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
             {selectedProject && (
                 <ProjectModal 
                     project={selectedProject} 
-                    onClose={() => setSelectedProjectId(null)} 
+                    onClose={() => { setEditBuffer({}); setSelectedProjectId(null); }} 
                     isEditing={isEditing}
                     teamData={teamData}
                     onUpdate={(field, val) => handleUpdateProject(selectedProject.id, field, val)}

@@ -35,6 +35,9 @@ function App() {
   // Firestore Data State
   const [projects, setProjects] = useState<any[]>([]);
   const [isProjectsLoading, setIsProjectsLoading] = useState(true);
+  const [schedules, setSchedules] = useState<any[]>([]);
+  const [studyLogs, setStudyLogs] = useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
 
   // Fetch Projects from Firestore
   useEffect(() => {
@@ -53,6 +56,51 @@ function App() {
       setIsProjectsLoading(false);
     });
 
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch Schedules from Firestore
+  useEffect(() => {
+    const q = query(collection(db, "schedules"), orderBy("date", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setSchedules(fetched);
+    }, (error) => {
+      console.error("Error fetching schedules: ", error);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch Study Logs from Firestore
+  useEffect(() => {
+    const q = query(collection(db, "studylogs"), orderBy("date", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setStudyLogs(fetched);
+    }, (error) => {
+      console.error("Error fetching study logs: ", error);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch Team Members from Firestore
+  useEffect(() => {
+    const q = query(collection(db, "team"), orderBy("createdAt", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setTeamMembers(fetched);
+    }, (error) => {
+      console.error("Error fetching team: ", error);
+    });
     return () => unsubscribe();
   }, []);
 
@@ -116,11 +164,11 @@ function App() {
           isEditing={isEditing} 
         />;
       case 'schedule':
-        return <SchedulePage data={data.schedule} updateData={updateData} isEditing={isEditing} />;
+        return <SchedulePage data={schedules.length > 0 ? schedules : data.schedule} updateData={updateData} isEditing={isEditing} />;
       case 'study':
-        return <StudyPage data={data.study} updateData={updateData} isEditing={isEditing} />;
+        return <StudyPage data={studyLogs.length > 0 ? studyLogs : data.study} updateData={updateData} isEditing={isEditing} />;
       case 'team': 
-        return <TeamPage data={data.team} updateData={updateData} isEditing={isEditing} />;
+        return <TeamPage data={teamMembers.length > 0 ? teamMembers : data.team} updateData={updateData} isEditing={isEditing} />;
       case 'archive':
         return <ArchivePage data={data.archive} updateData={updateData} isEditing={isEditing} />;
       case 'admin':

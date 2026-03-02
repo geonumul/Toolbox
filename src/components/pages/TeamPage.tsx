@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Mail, Plus, Trash2, Edit3, Check, Instagram, Linkedin, Link as LinkIcon, Upload } from "lucide-react";
+import { db } from '../../firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
 interface TeamPageProps {
   data: any[];
@@ -13,7 +15,7 @@ export const TeamPage = ({
   updateData,
   isEditing,
 }: TeamPageProps) => {
-  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | number | null>(null);
 
   // ESC key handler for modal
   useEffect(() => {
@@ -30,37 +32,64 @@ export const TeamPage = ({
     ? data.find((m) => m.id === selectedMemberId)
     : null;
 
-  const handleUpdateMember = (id: number, updatedMember: any) => {
-    const updatedTeam = data.map((m) =>
-      m.id === id ? updatedMember : m
-    );
-    updateData("team", updatedTeam);
+  // Firestore update
+  const handleUpdateMember = async (id: string | number, updatedMember: any) => {
+    if (typeof id === 'string') {
+        try {
+            const memberRef = doc(db, "team", id);
+            // Extract only serializable fields (no id)
+            const { id: _, ...dataToSave } = updatedMember;
+            await updateDoc(memberRef, dataToSave);
+        } catch (error) {
+            console.error("Error updating team member: ", error);
+            alert("Failed to save member: " + error);
+        }
+    } else {
+        const updatedTeam = data.map((m) =>
+          m.id === id ? updatedMember : m
+        );
+        updateData("team", updatedTeam);
+    }
   };
 
-  const handleAddMember = () => {
-    const newId = Math.max(...data.map((m) => m.id), 0) + 1;
-    const newMember = {
-      id: newId,
-      name: "New Member",
-      role: "Designer",
-      image: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-      bio: "Introduction...",
-      major: "Spatial Design",
-      email: "email@example.com",
-      instagram: "",
-      linkedin: "",
-      customLinks: [],
-      interests: "Urban Regeneration, Data Visualization",
-      software: "Rhino, Grasshopper, Unreal Engine"
-    };
-    updateData("team", [...data, newMember]);
+  // Firestore add
+  const handleAddMember = async () => {
+    try {
+        await addDoc(collection(db, "team"), {
+          name: "New Member",
+          role: "Designer",
+          image: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+          bio: "Introduction...",
+          major: "Spatial Design",
+          email: "email@example.com",
+          instagram: "",
+          linkedin: "",
+          customLinks: [],
+          interests: "Urban Regeneration, Data Visualization",
+          software: "Rhino, Grasshopper, Unreal Engine",
+          createdAt: new Date()
+        });
+    } catch (error) {
+        console.error("Error adding team member: ", error);
+        alert("Failed to add member: " + error);
+    }
   };
 
-  const handleDeleteMember = (e: React.MouseEvent, id: number) => {
+  // Firestore delete
+  const handleDeleteMember = async (e: React.MouseEvent, id: string | number) => {
     e.stopPropagation();
     if (confirm("Are you sure you want to delete this member?")) {
-      const updatedTeam = data.filter((m) => m.id !== id);
-      updateData("team", updatedTeam);
+      if (typeof id === 'string') {
+          try {
+              await deleteDoc(doc(db, "team", id));
+          } catch (error) {
+              console.error("Error deleting team member: ", error);
+              alert("Failed to delete member: " + error);
+          }
+      } else {
+          const updatedTeam = data.filter((m) => m.id !== id);
+          updateData("team", updatedTeam);
+      }
       if (selectedMemberId === id) setSelectedMemberId(null);
     }
   };
@@ -230,7 +259,6 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                // UPDATED SIZE HERE: max-w-[950px], h-[550px], rounded-none
                 className="bg-white w-full h-full md:h-[550px] md:max-w-[950px] shadow-2xl flex flex-col md:flex-row relative overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
