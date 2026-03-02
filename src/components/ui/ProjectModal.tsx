@@ -317,14 +317,14 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                     </div>
 
                      <div className="border-b border-gray-100 pb-6 mb-6">
-                        <p className="text-base text-gray-700 font-medium leading-relaxed">
+                        <div className="text-base text-gray-700 font-medium leading-relaxed">
                             <EditableField
                                 value={project.description || "No description available."}
                                 onSave={(val) => handleUpdate('description', val)}
                                 isEditing={isEditing}
                                 multiline={true}
                             />
-                        </p>
+                        </div>
                     </div>
 
                     {/* Meta Grid */}
