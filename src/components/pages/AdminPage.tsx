@@ -149,7 +149,7 @@ export const AdminPage = ({ teamData = [] }: AdminPageProps) => {
             <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Category</label>
                 <div className="relative">
-                <select 
+                <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black outline-none appearance-none cursor-pointer transition-all"
@@ -164,11 +164,12 @@ export const AdminPage = ({ teamData = [] }: AdminPageProps) => {
                 </div>
             </div>
 
-            {/* Author Select */}
+            {/* Author Select - only for Projects */}
+            {category !== 'Activities' && (
             <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Author</label>
                 <div className="relative">
-                <select 
+                <select
                     value={author}
                     onChange={(e) => setAuthor(e.target.value)}
                     className="w-full p-4 bg-gray-50 border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black outline-none appearance-none cursor-pointer transition-all"
@@ -186,6 +187,7 @@ export const AdminPage = ({ teamData = [] }: AdminPageProps) => {
                 </div>
                 </div>
             </div>
+            )}
           </div>
 
           {/* Description Textarea */}

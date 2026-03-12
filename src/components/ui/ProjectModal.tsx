@@ -84,23 +84,13 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
               // Upload to Cloudinary immediately
               const url = await uploadFileToCloudinary(file);
               
-              // SYNC LOGIC: Bidirectional syncing as requested
-              if (field === 'image') {
-                  // Left -> Right: If updating Main Image, ALWAYS update Attachment Link too
-                  onUpdate({
-                      image: url,
-                      pdfUrl: url
-                  });
-              } else if (field === 'pdfUrl') {
-                  // Right -> Left: If updating Attachment Link, ONLY update Main Image if it is an image file
-                  if (file.type.startsWith('image/')) {
-                      onUpdate({
-                          pdfUrl: url,
-                          image: url
-                      });
-                  } else {
-                      onUpdate('pdfUrl', url);
-                  }
+              const isImage = file.type.startsWith('image/');
+              if (isImage) {
+                  // 이미지면 양쪽 다 업데이트
+                  onUpdate({ image: url, pdfUrl: url });
+              } else {
+                  // 비이미지(PDF 등)면 attachment만 업데이트, image는 유지
+                  onUpdate('pdfUrl', url);
               }
 
           } catch (error) {
@@ -212,16 +202,20 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                     }}
                     className="relative"
                 >
-                    <img 
-                        src={project.image} 
-                        alt={project.title} 
-                        className="max-w-none shadow-xl pointer-events-none select-none"
-                        style={{
-                             maxWidth: '100%',
-                             maxHeight: '80vh',
-                         }}
-                        draggable={false}
-                    />
+                    {project.image && /\.(pdf|zip|docx?|pptx?|xlsx?)(\?|$)/i.test(project.image) ? (
+                        <div className="flex flex-col items-center justify-center p-16 text-gray-400">
+                            <FileText size={64} className="mb-4" />
+                            <span className="text-sm font-mono">File Attached</span>
+                        </div>
+                    ) : (
+                        <img
+                            src={project.image}
+                            alt={project.title}
+                            className="max-w-none shadow-xl pointer-events-none select-none"
+                            style={{ maxWidth: '100%', maxHeight: '80vh' }}
+                            draggable={false}
+                        />
+                    )}
                 </div>
             </div>
             
@@ -289,6 +283,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                         />
                     </h2>
                     
+                    {project.type !== 'Activities' && (
                     <div className="text-sm font-mono text-gray-500 mb-6">
                         {isEditing ? (
                             <div className="relative">
@@ -303,7 +298,6 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                                             <option key={member.id} value={member.name.trim()}>{member.name}</option>
                                         ))
                                     ) : (
-                                        // Fallback if no team data
                                         ["Ko Geon", "Park Kyeong-jun", "Yoo Seung-min", "Ryu Hyun-jung", "Yang Hyung-seok", "Kwon Si-hyun", "Kim Ji-eun", "Shim Jung-eun", "Kim Do-kyeong", "Admin"].map(name => (
                                             <option key={name} value={name}>{name}</option>
                                         ))
@@ -315,6 +309,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                             project.author || "Unknown"
                         )}
                     </div>
+                    )}
 
                      <div className="border-b border-gray-100 pb-6 mb-6">
                         <div className="text-base text-gray-700 font-medium leading-relaxed">

@@ -12,8 +12,8 @@ interface SchedulePageProps {
 }
 
 export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePageProps) => {
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); 
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date(2026, 1, 3)); 
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [highlightedEventId, setHighlightedEventId] = useState<string | number | null>(null);
 
   const eventRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -123,7 +123,9 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
       }
   };
 
-  const nextUpEvent = sortedEvents.length > 0 ? sortedEvents[0] : null;
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  const nextUpEvent = sortedEvents.find(e => new Date(e.date) >= todayMidnight) || null;
 
   return (
     <motion.div
@@ -230,7 +232,7 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
                         const d = new Date(event.date);
                         const dayNum = d.getDate();
                         const weekDay = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(d);
-                        const isComingUp = idx === 0; 
+                        const isComingUp = nextUpEvent && event.id === nextUpEvent.id;
                         const isHighlighted = highlightedEventId === event.id;
 
                         return (
