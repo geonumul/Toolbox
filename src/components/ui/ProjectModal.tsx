@@ -84,13 +84,16 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
               // Upload to Cloudinary immediately
               const url = await uploadFileToCloudinary(file);
               
-              const isImage = file.type.startsWith('image/');
-              if (isImage) {
-                  // 이미지면 양쪽 다 업데이트
+              if (field === 'image') {
+                  // 왼쪽 업로드: 항상 양쪽 다 업데이트
                   onUpdate({ image: url, pdfUrl: url });
               } else {
-                  // 비이미지(PDF 등)면 attachment만 업데이트, image는 유지
-                  onUpdate('pdfUrl', url);
+                  // 오른쪽 업로드: 이미지면 양쪽, 아니면 attachment만
+                  if (file.type.startsWith('image/')) {
+                      onUpdate({ image: url, pdfUrl: url });
+                  } else {
+                      onUpdate('pdfUrl', url);
+                  }
               }
 
           } catch (error) {
