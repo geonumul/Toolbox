@@ -205,11 +205,14 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                     }}
                     className="relative"
                 >
-                    {project.image && /\.(pdf|zip|docx?|pptx?|xlsx?)(\?|$)/i.test(project.image) ? (
-                        <div className="flex flex-col items-center justify-center p-16 text-gray-400">
-                            <FileText size={64} className="mb-4" />
-                            <span className="text-sm font-mono">File Attached</span>
-                        </div>
+                    {project.image && /\.pdf(\?|$)/i.test(project.image) ? (
+                        <img
+                            src={project.image.replace('/upload/', '/upload/pg_1,f_jpg/')}
+                            alt={project.title}
+                            className="max-w-none shadow-xl pointer-events-none select-none"
+                            style={{ maxWidth: '100%', maxHeight: '80vh' }}
+                            draggable={false}
+                        />
                     ) : (
                         <img
                             src={project.image}
