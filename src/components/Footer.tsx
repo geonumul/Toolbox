@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Instagram, ArrowUp, Box, Edit2, Check, X } from 'lucide-react';
 import { JoinUsModal } from './ui/JoinUsModal';
-import { useLang } from '../contexts/LangContext';
 
 interface FooterProps {
   isEditing?: boolean;
@@ -11,7 +10,6 @@ interface FooterProps {
 }
 
 export const Footer = ({ isEditing, onUpdateConfig, config, onApply }: FooterProps) => {
-  const { t } = useLang();
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState('');
@@ -143,22 +141,22 @@ export const Footer = ({ isEditing, onUpdateConfig, config, onApply }: FooterPro
                {/* Left Section */}
                <div className="max-w-2xl mb-12 md:mb-0">
                    <h2 className="text-4xl md:text-7xl lg:text-8xl font-light tracking-tight leading-[1.1] mb-8 md:mb-12">
-                       {t.footer.line1}<br/>
-                       {t.footer.line2}<br/>
-                       {t.footer.line3}
+                       Designing<br/>
+                       The Future<br/>
+                       Of Space.
                    </h2>
-                   <button
+                   <button 
                       onClick={() => setIsJoinModalOpen(true)}
                       className="bg-white text-black px-10 py-4 rounded-full text-sm font-bold tracking-wide hover:bg-gray-200 transition-colors"
                    >
-                       {t.footer.joinUs}
+                       Join Us
                    </button>
                </div>
   
                {/* Right Section - Columns */}
                <div className="flex gap-16 md:gap-32 text-sm self-start md:self-start md:mt-4">
                    <div className="flex flex-col gap-6">
-                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">{t.footer.socials}</span>
+                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Socials</span>
                        <div className="flex flex-col gap-3 font-light text-gray-300">
                           {renderEditableLink(
                             'instagramLink', 
@@ -175,7 +173,7 @@ export const Footer = ({ isEditing, onUpdateConfig, config, onApply }: FooterPro
                        </div>
                    </div>
                    <div className="flex flex-col gap-6">
-                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">{t.footer.contact}</span>
+                       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Contact</span>
                        <div className="flex flex-col gap-3 font-light text-gray-300">
                           {renderEditableText(
                               'contactEmail',

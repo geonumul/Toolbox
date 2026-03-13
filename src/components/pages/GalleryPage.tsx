@@ -4,7 +4,6 @@ import { ProjectModal } from '../ui/ProjectModal';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { doc, updateDoc, collection, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { useLang } from '../../contexts/LangContext';
 
 interface GalleryPageProps {
     data: any[];
@@ -15,7 +14,6 @@ interface GalleryPageProps {
 }
 
 export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], updateData, isEditing = false }: GalleryPageProps) => {
-  const { t } = useLang();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedProjectId, setSelectedProjectId] = useState<string | number | null>(null);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
@@ -203,7 +201,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                                 onClick={clearAuthors}
                                 className={`text-sm font-mono uppercase tracking-tight transition-colors ${selectedAuthors.length === 0 ? 'font-bold text-primary border-b border-primary' : 'text-muted-foreground hover:text-primary'}`}
                             >
-                                {t.gallery.allWork}
+                                All Work
                             </button>
                             
                             <span className="text-muted text-xs">|</span>
@@ -236,7 +234,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                                             className="group flex items-center gap-1.5 text-[10px] font-mono font-bold text-muted-foreground hover:text-destructive uppercase tracking-widest border border-border hover:border-destructive/20 rounded-full px-3 py-1 transition-all"
                                         >
                                             <X size={10} className="group-hover:rotate-90 transition-transform" />
-                                            {t.gallery.clear}
+                                            Clear
                                         </button>
                                     </motion.div>
                                 )}
@@ -299,7 +297,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                         className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500 transition-colors cursor-pointer"
                     >
                          <Plus size={48} strokeWidth={1} />
-                         <span className="mt-4 font-bold uppercase tracking-widest text-xs">{t.gallery.add} {activeTab}</span>
+                         <span className="mt-4 font-bold uppercase tracking-widest text-xs">Add {activeTab}</span>
                     </div>
                 )}
             </div>
@@ -307,7 +305,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
             {filteredData.length === 0 && !isEditing ? (
                 <div className="text-center py-32 border-t border-b border-border">
                     <div className="text-4xl font-mono text-muted mb-2">NULL</div>
-                    <div className="text-muted-foreground font-mono text-sm">{t.gallery.noData}</div>
+                    <div className="text-muted-foreground font-mono text-sm">NO DATA FOUND FOR SELECTED FILTERS</div>
                 </div>
             ) : null}
         </div>

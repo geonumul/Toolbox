@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowDown } from 'lucide-react';
 import { EditableField } from './ui/EditableField';
-import { useLang } from '../contexts/LangContext';
 
 interface RecruitmentProps {
   data?: any; // Recruitment data object
@@ -11,7 +10,6 @@ interface RecruitmentProps {
 }
 
 export const Recruitment = ({ data, updateData, isEditing = false }: RecruitmentProps) => {
-  const { t } = useLang();
   const scrollToFooter = () => {
     if (isEditing) return; // Disable scroll action when editing
     window.scrollTo({
@@ -27,11 +25,11 @@ export const Recruitment = ({ data, updateData, isEditing = false }: Recruitment
   };
 
   // Fallback if no data provided
-  const title1 = data?.title1 || t.recruitment.title1;
-  const title2 = data?.title2 || t.recruitment.title2;
-  const roles = data?.roles || t.recruitment.roles;
-  const status = data?.status || t.recruitment.status;
-  const cta = data?.cta || t.recruitment.cta;
+  const title1 = data?.title1 || "WE ARE LOOKING FOR";
+  const title2 = data?.title2 || "VISIONARIES";
+  const roles = data?.roles || "Spatial Designer • Researcher • Creative Coder";
+  const status = data?.status || "Open Positions Available";
+  const cta = data?.cta || "Apply Below";
 
   return (
     <section 

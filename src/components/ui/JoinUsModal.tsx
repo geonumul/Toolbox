@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ArrowRight, Check, Upload, FileText } from 'lucide-react';
-import { useLang } from '../../contexts/LangContext';
 
 interface JoinUsModalProps {
   isOpen: boolean;
@@ -10,7 +9,6 @@ interface JoinUsModalProps {
 }
 
 export const JoinUsModal = ({ isOpen, onClose, onApply }: JoinUsModalProps) => {
-  const { t } = useLang();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [noPortfolio, setNoPortfolio] = useState(false);
   const [formData, setFormData] = useState({
@@ -84,7 +82,7 @@ export const JoinUsModal = ({ isOpen, onClose, onApply }: JoinUsModalProps) => {
           >
             <div className="bg-white text-black w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl pointer-events-auto relative flex flex-col max-h-[90vh]">
               <div className="flex justify-between items-center p-6 md:p-8 border-b border-gray-100">
-                <h2 className="text-3xl font-light tracking-tight">{t.joinUs.title}</h2>
+                <h2 className="text-3xl font-light tracking-tight">Join Our Team</h2>
                 <button 
                   onClick={onClose}
                   className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-black hover:text-white transition-all"
@@ -99,51 +97,51 @@ export const JoinUsModal = ({ isOpen, onClose, onApply }: JoinUsModalProps) => {
                     <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
                       <Check size={32} />
                     </div>
-                    <h3 className="text-2xl font-bold mb-2">{t.joinUs.successTitle}</h3>
-                    <p className="text-gray-500">{t.joinUs.successMessage}</p>
+                    <h3 className="text-2xl font-bold mb-2">Application Received</h3>
+                    <p className="text-gray-500">Thank you for your interest. We'll be in touch shortly.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-gray-500">{t.joinUs.fullName}</label>
-                        <input
-                          type="text"
+                        <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Full Name</label>
+                        <input 
+                          type="text" 
                           required
                           value={formData.name}
                           onChange={(e) => setFormData({...formData, name: e.target.value})}
                           className="border-b border-gray-300 py-2 outline-none focus:border-black transition-colors bg-transparent"
-                          placeholder={t.joinUs.namePlaceholder}
+                          placeholder="Jane Doe"
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-gray-500">{t.joinUs.email}</label>
-                        <input
-                          type="email"
+                        <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Email Address</label>
+                        <input 
+                          type="email" 
                           required
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
                           className="border-b border-gray-300 py-2 outline-none focus:border-black transition-colors bg-transparent"
-                          placeholder={t.joinUs.emailPlaceholder}
+                          placeholder="jane@example.com"
                         />
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-gray-500">{t.joinUs.phone}</label>
-                        <input
-                          type="tel"
+                        <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Phone Number</label>
+                        <input 
+                          type="tel" 
                           value={formData.phone}
                           onChange={(e) => setFormData({...formData, phone: e.target.value})}
                           className="border-b border-gray-300 py-2 outline-none focus:border-black transition-colors bg-transparent"
-                          placeholder={t.joinUs.phonePlaceholder}
+                          placeholder="010-0000-0000"
                         />
                     </div>
 
                     <div className="flex flex-col gap-2">
                       <label className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center justify-between">
-                          <span>{t.joinUs.portfolio}</span>
-                          <span className="text-[10px] text-gray-400 font-normal normal-case">{t.joinUs.portfolioSub}</span>
+                          <span>Portfolio</span>
+                          <span className="text-[10px] text-gray-400 font-normal normal-case">Link OR File Attachment</span>
                       </label>
                       
                       <div className="flex flex-col gap-3">
@@ -158,7 +156,7 @@ export const JoinUsModal = ({ isOpen, onClose, onApply }: JoinUsModalProps) => {
                                 className={`w-full border-b border-gray-300 py-2 outline-none transition-colors bg-transparent ${
                                 noPortfolio ? 'opacity-50 cursor-not-allowed' : 'focus:border-black'
                                 }`}
-                                placeholder={noPortfolio ? t.joinUs.noPortfolio : t.joinUs.portfolioPlaceholder}
+                                placeholder={noPortfolio ? 'No portfolio' : 'https://your-portfolio.com'}
                             />
                         </div>
 
@@ -166,7 +164,7 @@ export const JoinUsModal = ({ isOpen, onClose, onApply }: JoinUsModalProps) => {
                         <div className={`flex items-center gap-3 ${formData.portfolio ? 'opacity-50 pointer-events-none' : ''} ${noPortfolio ? 'opacity-50 pointer-events-none' : ''}`}>
                              <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-black rounded-lg text-xs font-bold uppercase cursor-pointer transition-colors">
                                 <Upload size={14} />
-                                {formData.portfolioFile ? t.joinUs.changeFile : t.joinUs.uploadFile}
+                                {formData.portfolioFile ? 'Change File' : 'Upload File'}
                                 <input 
                                     type="file" 
                                     accept=".pdf,.doc,.docx" 
@@ -196,20 +194,20 @@ export const JoinUsModal = ({ isOpen, onClose, onApply }: JoinUsModalProps) => {
                           className="w-4 h-4 accent-black cursor-pointer"
                         />
                         <label htmlFor="no-portfolio" className="text-sm text-gray-500 cursor-pointer select-none">
-                          {t.joinUs.noPortfolio}
+                          I don't have a portfolio
                         </label>
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <label className="text-xs font-bold uppercase tracking-widest text-gray-500">{t.joinUs.message}</label>
-                      <textarea
+                      <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Message</label>
+                      <textarea 
                         rows={4}
                         required
                         value={formData.message}
                         onChange={(e) => setFormData({...formData, message: e.target.value})}
                         className="border border-gray-200 rounded-xl p-4 outline-none focus:border-black transition-colors bg-gray-50 resize-none"
-                        placeholder={t.joinUs.messagePlaceholder}
+                        placeholder="Tell us about yourself and why you want to join..."
                       />
                     </div>
 
@@ -217,7 +215,7 @@ export const JoinUsModal = ({ isOpen, onClose, onApply }: JoinUsModalProps) => {
                       type="submit"
                       className="bg-black text-white py-4 rounded-xl font-bold tracking-wide mt-4 hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 group"
                     >
-                      {t.joinUs.submit}
+                      Submit Application
                       <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                     </button>
                   </form>

@@ -4,7 +4,6 @@ import { Plus, Trash2 } from 'lucide-react';
 import { EditableField } from '../ui/EditableField';
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
-import { useLang } from '../../contexts/LangContext';
 
 interface StudyPageProps {
     data: any[];
@@ -13,7 +12,6 @@ interface StudyPageProps {
 }
 
 export const StudyPage = ({ data, updateData, isEditing = false }: StudyPageProps) => {
-  const { t } = useLang();
   // Pagination State
   const ITEMS_PER_PAGE = 6;
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
@@ -92,15 +90,15 @@ export const StudyPage = ({ data, updateData, isEditing = false }: StudyPageProp
        <div className="max-w-[1400px] mx-auto">
          {/* Header Section */}
          <div className="mb-12 pb-6 border-b border-gray-200">
-             <h1 className="text-5xl md:text-6xl font-light tracking-tight mb-3">{t.study.title}</h1>
+             <h1 className="text-5xl md:text-6xl font-light tracking-tight mb-3">Study Log</h1>
              <div className="flex items-center gap-4">
-                <p className="text-gray-500 font-light text-base tracking-normal">{t.study.description}</p>
+                <p className="text-gray-500 font-light text-base tracking-normal">Weekly records of our design exploration.</p>
                 {isEditing && (
                     <button
                         onClick={handleAddLog}
                         className="px-4 py-1.5 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all flex items-center gap-2 flex-shrink-0"
                     >
-                        <Plus size={12} /> {t.study.writeLog}
+                        <Plus size={12} /> Write Log
                     </button>
                 )}
              </div>
@@ -171,7 +169,7 @@ export const StudyPage = ({ data, updateData, isEditing = false }: StudyPageProp
             
             {data.length === 0 && (
                 <div className="col-span-2 text-center py-24 text-gray-300 font-mono text-sm border border-dashed border-gray-200">
-                    {t.study.empty}
+                    NO STUDY LOGS RECORDED.
                 </div>
             )}
          </div>
@@ -180,19 +178,19 @@ export const StudyPage = ({ data, updateData, isEditing = false }: StudyPageProp
          {(hasMore || canShowLess) && (
             <div className="flex justify-center gap-6 mt-24">
                 {hasMore && (
-                    <button
+                    <button 
                         onClick={handleLoadMore}
                         className="text-[11px] font-bold tracking-[0.2em] uppercase text-gray-400 hover:text-black transition-colors"
                     >
-                        {t.study.loadMore}
+                        Load More +
                     </button>
                 )}
                 {canShowLess && (
-                    <button
+                    <button 
                         onClick={handleShowLess}
                         className="text-[11px] font-bold tracking-[0.2em] uppercase text-gray-400 hover:text-black transition-colors"
                     >
-                        {t.study.showLess}
+                        Show Less -
                     </button>
                 )}
             </div>

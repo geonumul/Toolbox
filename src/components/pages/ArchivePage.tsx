@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Plus, Trash2 } from 'lucide-react';
 import { EditableField } from '../ui/EditableField';
-import { useLang } from '../../contexts/LangContext';
 
 interface ArchivePageProps {
     data: any[];
@@ -11,7 +10,6 @@ interface ArchivePageProps {
 }
 
 export const ArchivePage = ({ data, updateData, isEditing = false }: ArchivePageProps) => {
-  const { t } = useLang();
   const ITEMS_PER_LOAD = 5;
   const [awardsCount, setAwardsCount] = useState(ITEMS_PER_LOAD);
   const [pubsCount, setPubsCount] = useState(ITEMS_PER_LOAD);
@@ -67,9 +65,9 @@ export const ArchivePage = ({ data, updateData, isEditing = false }: ArchivePage
       <div className="max-w-[1400px] mx-auto">
         {/* Header */}
         <div className="text-center mb-32">
-             <h1 className="text-6xl md:text-7xl font-light tracking-tight mb-6">{t.archive.title}</h1>
+             <h1 className="text-6xl md:text-7xl font-light tracking-tight mb-6">Archive</h1>
              <p className="text-gray-500 font-light text-lg tracking-wide">
-                {t.archive.description}
+                Collection of our awards, publications, and honors.
              </p>
         </div>
 
@@ -77,13 +75,13 @@ export const ArchivePage = ({ data, updateData, isEditing = false }: ArchivePage
             {/* Awards Column */}
             <div>
                 <div className="flex justify-between items-end mb-6 border-b border-black pb-4">
-                    <h2 className="text-2xl font-normal">{t.archive.awards}</h2>
+                    <h2 className="text-2xl font-normal">Awards</h2>
                     {isEditing && (
-                        <button
+                        <button 
                             onClick={() => handleAddItem('Award')}
                             className="text-sm font-medium flex items-center gap-1 hover:text-gray-600 transition-colors"
                         >
-                            <Plus size={16} /> {t.archive.add}
+                            <Plus size={16} /> Add
                         </button>
                     )}
                 </div>
@@ -137,26 +135,26 @@ export const ArchivePage = ({ data, updateData, isEditing = false }: ArchivePage
                         </div>
                     ))}
                     {visibleAwards.length === 0 && (
-                        <div className="py-6 text-gray-400 italic text-sm">{t.archive.noAwards}</div>
+                        <div className="py-6 text-gray-400 italic text-sm">No awards yet.</div>
                     )}
                 </div>
 
                 {/* Buttons for Awards */}
                 <div className="mt-10 text-center space-x-6">
                     {awardsCount < awards.length && (
-                        <button
+                        <button 
                             onClick={handleLoadMoreAwards}
                             className="text-[11px] font-bold tracking-[0.2em] text-gray-400 hover:text-black uppercase transition-colors"
                         >
-                            {t.archive.loadMore}
+                            Load More +
                         </button>
                     )}
                     {awardsCount > ITEMS_PER_LOAD && (
-                        <button
+                        <button 
                             onClick={handleShowLessAwards}
                             className="text-[11px] font-bold tracking-[0.2em] text-gray-400 hover:text-black uppercase transition-colors"
                         >
-                            {t.archive.showLess}
+                            Show Less -
                         </button>
                     )}
                 </div>
@@ -165,13 +163,13 @@ export const ArchivePage = ({ data, updateData, isEditing = false }: ArchivePage
             {/* Publications Column */}
             <div>
                 <div className="flex justify-between items-end mb-6 border-b border-black pb-4">
-                    <h2 className="text-2xl font-normal">{t.archive.publications}</h2>
+                    <h2 className="text-2xl font-normal">Publications</h2>
                     {isEditing && (
-                        <button
+                        <button 
                             onClick={() => handleAddItem('Publication')}
                             className="text-sm font-medium flex items-center gap-1 hover:text-gray-600 transition-colors"
                         >
-                            <Plus size={16} /> {t.archive.add}
+                            <Plus size={16} /> Add
                         </button>
                     )}
                 </div>
@@ -213,26 +211,26 @@ export const ArchivePage = ({ data, updateData, isEditing = false }: ArchivePage
                         </div>
                     ))}
                     {visiblePubs.length === 0 && (
-                        <div className="py-6 text-gray-400 italic text-sm">{t.archive.noPublications}</div>
+                        <div className="py-6 text-gray-400 italic text-sm">No publications yet.</div>
                     )}
                 </div>
 
                 {/* Buttons for Publications */}
                 <div className="mt-10 text-center space-x-6">
                     {pubsCount < publications.length && (
-                         <button
+                         <button 
                             onClick={handleLoadMorePubs}
                             className="text-[11px] font-bold tracking-[0.2em] text-gray-400 hover:text-black uppercase transition-colors"
                         >
-                            {t.archive.loadMore}
+                            Load More +
                         </button>
                     )}
                     {pubsCount > ITEMS_PER_LOAD && (
-                         <button
+                         <button 
                             onClick={handleShowLessPubs}
                             className="text-[11px] font-bold tracking-[0.2em] text-gray-400 hover:text-black uppercase transition-colors"
                         >
-                            {t.archive.showLess}
+                            Show Less -
                         </button>
                     )}
                 </div>
