@@ -35,6 +35,20 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+
+  const nextUpEvent = [...data]
+      .filter(e => new Date(e.date) >= todayMidnight)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] || null;
+
+  const displayEvents = [
+      ...(nextUpEvent ? [nextUpEvent] : []),
+      ...[...data]
+          .filter(e => e.id !== nextUpEvent?.id)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  ];
+
   const sortedEvents = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const getEventsForDay = (day: number) => {
@@ -123,9 +137,6 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
       }
   };
 
-  const todayMidnight = new Date();
-  todayMidnight.setHours(0, 0, 0, 0);
-  const nextUpEvent = sortedEvents.find(e => new Date(e.date) >= todayMidnight) || null;
 
   return (
     <motion.div
@@ -228,7 +239,7 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
                 </div>
                 
                 <div className="space-y-0">
-                    {sortedEvents.map((event, idx) => {
+                    {displayEvents.map((event, idx) => {
                         const d = new Date(event.date);
                         const dayNum = d.getDate();
                         const weekDay = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(d);
