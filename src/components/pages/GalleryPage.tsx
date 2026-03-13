@@ -272,7 +272,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                                 {item.title}
                             </h3>
                             <div className="flex justify-between items-baseline font-mono text-[10px] text-muted-foreground uppercase tracking-wide">
-                                <span>{activeTab === 'Activities' ? (item.author || "Team") : (item.author || "Unknown")}</span>
+                                {activeTab !== 'Activities' && <span>{item.author || "Unknown"}</span>}
                                 <span>{item.date || "2026.01.01"}</span>
                             </div>
                         </div>
