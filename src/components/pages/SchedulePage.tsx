@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { EditableField } from '../ui/EditableField';
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useLang } from '../../contexts/LangContext';
 
 interface SchedulePageProps {
     data: any[];
@@ -12,19 +13,20 @@ interface SchedulePageProps {
 }
 
 export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePageProps) => {
+  const { t } = useLang();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [highlightedEventId, setHighlightedEventId] = useState<string | number | null>(null);
 
   const eventRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDay = new Date(year, month, 1).getDay(); 
-  
-  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+  const firstDay = new Date(year, month, 1).getDay();
+
+  const monthNames = t.schedule.months;
+  const weekDays = t.schedule.weekDays;
 
   // Real today check
   const today = new Date();
@@ -207,7 +209,7 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
 
                     {nextUpEvent && (
                         <div>
-                            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-6">Next Up</h3>
+                            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-6">{t.schedule.nextUp}</h3>
                             <div 
                                 className="group cursor-pointer"
                                 onClick={() => handleEventClick(nextUpEvent)}
@@ -227,13 +229,13 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
             {/* Right Column: Schedule List */}
             <div className="flex-1 min-w-0">
                 <div className="mb-12 flex items-center justify-between">
-                    <h1 className="text-2xl text-foreground">Schedule</h1>
+                    <h1 className="text-2xl text-foreground">{t.schedule.title}</h1>
                     {isEditing && (
-                        <button 
+                        <button
                             onClick={handleAddEvent}
                             className="bg-black text-white px-4 py-2 text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-neutral-800"
                         >
-                            <Plus size={14} /> Add Event
+                            <Plus size={14} /> {t.schedule.addEvent}
                         </button>
                     )}
                 </div>
@@ -242,7 +244,7 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
                     {displayEvents.map((event, idx) => {
                         const d = new Date(event.date);
                         const dayNum = d.getDate();
-                        const weekDay = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(d);
+                        const weekDay = new Intl.DateTimeFormat(t.schedule.weekdayLocale, { weekday: 'short' }).format(d);
                         const isComingUp = nextUpEvent && event.id === nextUpEvent.id;
                         const isHighlighted = highlightedEventId === event.id;
 
@@ -300,7 +302,7 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
                                         </h3>
                                         {isComingUp && (
                                             <span className="bg-primary text-primary-foreground text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider flex-shrink-0">
-                                                Coming Up
+                                                {t.schedule.comingUp}
                                             </span>
                                         )}
                                     </div>

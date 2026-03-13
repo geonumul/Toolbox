@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useLang } from '../contexts/LangContext';
 
 export const IntroLoader = ({ onComplete }: { onComplete: () => void }) => {
+  const { t } = useLang();
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -41,10 +43,10 @@ export const IntroLoader = ({ onComplete }: { onComplete: () => void }) => {
            />
         </div>
         <div className="mt-8 text-center font-mono text-xs text-gray-500 uppercase tracking-widest">
-            {count < 30 && "Loading Modules..."}
-            {count >= 30 && count < 70 && "Compiling Assets..."}
-            {count >= 70 && count < 100 && "Establishing Uplink..."}
-            {count === 100 && "System Ready"}
+            {count < 30 && t.loader.loading}
+            {count >= 30 && count < 70 && t.loader.compiling}
+            {count >= 70 && count < 100 && t.loader.uplink}
+            {count === 100 && t.loader.ready}
         </div>
       </div>
     </motion.div>

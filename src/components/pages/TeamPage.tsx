@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Mail, Plus, Trash2, Edit3, Check, Instagram, Linkedin, Link as LinkIcon, Upload } from "lucide-react";
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useLang } from '../../contexts/LangContext';
 
 interface TeamPageProps {
   data: any[];
@@ -15,6 +16,7 @@ export const TeamPage = ({
   updateData,
   isEditing,
 }: TeamPageProps) => {
+  const { t } = useLang();
   const [selectedMemberId, setSelectedMemberId] = useState<string | number | null>(null);
 
   // ESC key handler for modal
@@ -106,15 +108,14 @@ export const TeamPage = ({
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-6 border-b border-gray-200">
           <div className="max-w-3xl">
             <h1 className="text-5xl md:text-6xl font-light tracking-tight mb-3">
-              Members
+              {t.team.title}
             </h1>
             <p className="text-gray-400 font-medium text-[10px] md:text-[11px] uppercase tracking-[0.2em]">
-              A COLLECTIVE OF {data.length} MINDS PUSHING THE
-              BOUNDARIES OF SPATIAL DESIGN.
+              {t.team.collective(data.length)}
             </p>
           </div>
           <div className="mt-4 md:mt-0 font-bold text-[10px] md:text-[11px] tracking-widest uppercase text-gray-900">
-            {String(data.length).padStart(2, "0")} DESIGNERS
+            {t.team.designers(String(data.length).padStart(2, "0"))}
           </div>
         </div>
 
@@ -159,7 +160,7 @@ export const TeamPage = ({
                 <Plus size={24} strokeWidth={1} />
               </div>
               <span className="text-[10px] font-bold tracking-[0.2em] uppercase">
-                Add Member
+                {t.team.addMember}
               </span>
             </div>
           )}
@@ -184,6 +185,7 @@ import { uploadFileToCloudinary } from '../../utils/uploadService';
 
 // Internal Component for Modal Logic
 const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, onClose: () => void, isAdmin: boolean, onSave: (data: any) => void }) => {
+    const { t } = useLang();
     const [isLocalEditing, setIsLocalEditing] = useState(false);
     const [formData, setFormData] = useState(member);
     const [isUploading, setIsUploading] = useState(false);
@@ -343,16 +345,16 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                     <div className="absolute top-6 right-6 md:top-8 md:right-12">
                          {isLocalEditing ? (
                             <div className="flex gap-2">
-                                <button onClick={handleCancel} className="text-xs font-bold text-gray-400 hover:text-black">CANCEL</button>
-                                <button onClick={handleSave} className="text-xs font-bold text-black border border-black px-3 py-1 hover:bg-black hover:text-white transition-colors">SAVE</button>
+                                <button onClick={handleCancel} className="text-xs font-bold text-gray-400 hover:text-black">{t.team.cancel}</button>
+                                <button onClick={handleSave} className="text-xs font-bold text-black border border-black px-3 py-1 hover:bg-black hover:text-white transition-colors">{t.team.save}</button>
                             </div>
                         ) : (
                             isAdmin && (
-                                <button 
+                                <button
                                     onClick={() => setIsLocalEditing(true)}
                                     className="border border-gray-200 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 hover:border-black hover:bg-black hover:text-white transition-all rounded-sm"
                                 >
-                                    <Edit3 size={10} /> Edit Profile
+                                    <Edit3 size={10} /> {t.team.editProfile}
                                 </button>
                             )
                         )}
@@ -363,7 +365,7 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                         
                         {/* Introduction */}
                         <div>
-                            <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Introduction</h4>
+                            <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">{t.team.intro}</h4>
                             {isLocalEditing ? (
                                 <textarea 
                                     value={formData.bio}
@@ -378,7 +380,7 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                         {/* 2 Col Grid */}
                         <div className="grid grid-cols-2 gap-x-8 gap-y-6">
                             <div>
-                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Major</h4>
+                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">{t.team.major}</h4>
                                 {isLocalEditing ? (
                                     <input 
                                         type="text" 
@@ -391,7 +393,7 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                 )}
                             </div>
                             <div>
-                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Email</h4>
+                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">{t.team.email}</h4>
                                 {isLocalEditing ? (
                                     <input 
                                         type="text" 
@@ -407,7 +409,7 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
 
                         {/* Custom Links */}
                         <div>
-                            <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Custom Links</h4>
+                            <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">{t.team.links}</h4>
                             <div className="space-y-1">
                                 {(formData.customLinks || []).map((link: any, idx: number) => (
                                     <div key={idx} className={`flex items-center gap-2 ${isLocalEditing ? 'bg-gray-50 p-1 rounded' : ''}`}>
@@ -433,10 +435,10 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                     </div>
                                 ))}
                                 {(!formData.customLinks || formData.customLinks.length === 0) && !isLocalEditing && (
-                                    <p className="text-xs text-gray-300 italic">No links added.</p>
+                                    <p className="text-xs text-gray-300 italic">{t.team.noLinks}</p>
                                 )}
                                 {isLocalEditing && (
-                                    <button onClick={() => addCustomLink("Portfolio", "https://")} className="text-[10px] text-blue-500 hover:underline mt-1">+ Add Link</button>
+                                    <button onClick={() => addCustomLink("Portfolio", "https://")} className="text-[10px] text-blue-500 hover:underline mt-1">{t.team.addLink}</button>
                                 )}
                             </div>
                         </div>
@@ -444,7 +446,7 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                         {/* Interests & Software */}
                         <div className="space-y-6">
                             <div>
-                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Interests</h4>
+                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">{t.team.interests}</h4>
                                 {isLocalEditing ? (
                                     <input 
                                         type="text"
@@ -464,7 +466,7 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                             </div>
 
                             <div>
-                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">Software</h4>
+                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">{t.team.software}</h4>
                                 {isLocalEditing ? (
                                     <input 
                                         type="text"

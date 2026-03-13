@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, ScanLine } from 'lucide-react';
 import { useData } from '../utils/data';
 import { ProjectModal } from './ui/ProjectModal';
+import { useLang } from '../contexts/LangContext';
 
 export const HomeFeatured = () => {
+  const { t } = useLang();
   const { data } = useData();
   const projects = data?.gallery?.slice(0, 3) || [];
   const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -65,7 +67,7 @@ export const HomeFeatured = () => {
                         onClick={() => setSelectedProject(project)}
                         className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest border-b border-black pb-1 hover:gap-4 hover:border-neutral-500 hover:text-neutral-500 transition-all ${index % 2 === 1 ? 'ml-auto' : ''}`}
                     >
-                    Initialize View <ArrowRight size={14} />
+                    {t.featured.initView} <ArrowRight size={14} />
                     </button>
                 </div>
                 </div>

@@ -1,8 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ArrowDown } from 'lucide-react';
+import { useLang } from '../contexts/LangContext';
 
 export const Hero = () => {
+  const { t } = useLang();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -138,12 +140,12 @@ export const Hero = () => {
              <div className="h-px w-full bg-white mt-4 mb-6 opacity-50" />
              <div className="flex justify-between items-start font-mono text-xs md:text-xs uppercase tracking-widest opacity-80">
                  <div className="text-left leading-tight">
-                    CUK Spatial Design<br/>
-                    Est. 2025
+                    {t.hero.school}<br/>
+                    {t.hero.established}
                  </div>
                  <div className="text-right leading-tight">
-                    Creative Collective<br/>
-                    Space / Code / Art
+                    {t.hero.subtitle}<br/>
+                    {t.hero.description}
                  </div>
              </div>
          </motion.div>
