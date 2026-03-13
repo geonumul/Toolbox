@@ -1,5 +1,7 @@
 # TOOLBOX
 
+> 한국어 문서: [README.ko.md](README.ko.md)
+
 A web platform for a creative collective — built with React, Firebase, and Vite.
 
 ## Features
