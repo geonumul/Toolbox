@@ -2,7 +2,7 @@
 
 > 한국어 문서: [README.ko.md](README.ko.md)
 
-A web platform for a creative collective — built with React, Firebase, and Vite.
+Official website of **TOOLBOX**, a spatial design club at the Catholic University of Korea — built with React, Firebase, and Vite.
 
 ## Features
 

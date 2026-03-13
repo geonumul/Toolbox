@@ -1,6 +1,6 @@
 # TOOLBOX
 
-크리에이티브 콜렉티브를 위한 웹 플랫폼 — React, Firebase, Vite 기반.
+가톨릭대학교 공간디자인 소모임 **TOOLBOX** 공식 홈페이지 — React, Firebase, Vite 기반.
 
 ## 주요 기능
 
