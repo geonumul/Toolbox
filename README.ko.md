@@ -2,6 +2,8 @@
 
 가톨릭대학교 공간디자인 소모임 **TOOLBOX** 공식 홈페이지 — React, Firebase, Vite 기반.
 
+**라이브:** https://toolbox-tau-eight.vercel.app/
+
 ## 주요 기능
 
 - **갤러리** — Cloudinary 연동 이미지/PDF 프로젝트 쇼케이스

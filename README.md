@@ -4,6 +4,8 @@
 
 Official website of **TOOLBOX**, a spatial design club at the Catholic University of Korea — built with React, Firebase, and Vite.
 
+**Live:** https://toolbox-tau-eight.vercel.app/
+
 ## Features
 
 - **Gallery** — project showcase with image/PDF support via Cloudinary
