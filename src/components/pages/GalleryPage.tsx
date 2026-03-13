@@ -256,10 +256,10 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
                         onClick={() => setSelectedProjectId(item.id)}
                     >
                         <div className="overflow-hidden aspect-square bg-muted relative mb-4">
-                            <img 
-                                src={item.image} 
-                                alt={item.title} 
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0" 
+                            <img
+                                src={/\.pdf(\?|$)/i.test(item.image) ? item.image.replace('/upload/', '/upload/pg_1,f_jpg/') : item.image}
+                                alt={item.title}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0"
                             />
                             
                             <div className="absolute top-2 right-2 bg-primary text-primary-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">

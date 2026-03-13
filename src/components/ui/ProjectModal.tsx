@@ -138,6 +138,10 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
   }, []);
 
   const handleSaveClick = () => {
+      if (project.type !== 'Activities' && !project.author?.trim()) {
+          alert("Please select an author before saving.");
+          return;
+      }
       if(onSave) {
           onSave();
           alert("Project changes saved!");
