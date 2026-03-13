@@ -282,7 +282,9 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
                                             />
                                         </div>
                                     ) : (
-                                        <span className="text-[10px] text-muted-foreground/50 font-mono mt-2">{d.getFullYear()}</span>
+                                        <span className="text-[10px] text-muted-foreground/50 font-mono mt-2">
+                                            {new Intl.DateTimeFormat('en-US', { month: 'short' }).format(d)}. {d.getFullYear()}
+                                        </span>
                                     )}
                                 </div>
 
