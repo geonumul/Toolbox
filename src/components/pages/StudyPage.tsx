@@ -89,21 +89,19 @@ export const StudyPage = ({ data, updateData, isEditing = false }: StudyPageProp
     >
        <div className="max-w-[1400px] mx-auto">
          {/* Header Section */}
-         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-6 border-b border-gray-200">
-             <div>
-                <h1 className="text-5xl md:text-6xl font-light tracking-tight mb-3">Study Log</h1>
+         <div className="mb-12 pb-6 border-b border-gray-200">
+             <h1 className="text-5xl md:text-6xl font-light tracking-tight mb-3">Study Log</h1>
+             <div className="flex items-center gap-4">
                 <p className="text-gray-500 font-light text-base tracking-normal">Weekly records of our design exploration.</p>
+                {isEditing && (
+                    <button
+                        onClick={handleAddLog}
+                        className="px-4 py-1.5 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all flex items-center gap-2 flex-shrink-0"
+                    >
+                        <Plus size={12} /> Write Log
+                    </button>
+                )}
              </div>
-             
-             {/* Action Button - Only for Admin */}
-             {isEditing && (
-                 <button 
-                    onClick={handleAddLog}
-                    className="mt-6 md:mt-0 px-6 py-3 bg-black text-white text-sm font-bold uppercase tracking-widest hover:bg-neutral-800 transition-all flex items-center gap-2"
-                >
-                    <Plus size={16} /> Write Log
-                 </button>
-             )}
          </div>
 
          {/* Grid Layout */}
