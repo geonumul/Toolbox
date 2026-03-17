@@ -173,16 +173,16 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
         </button>
 
         {/* Left Side: Image Viewer */}
-        <div className="w-full h-[50%] md:w-[65%] lg:w-[70%] md:h-full bg-black relative overflow-hidden flex flex-col">
+        <div className="w-full h-[50%] md:w-[65%] lg:w-[70%] md:h-full bg-neutral-100 relative overflow-hidden flex flex-col">
 
             {/* Image */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden flex items-center justify-center bg-neutral-100">
                 <img
                     src={currentImage && /\.pdf(\?|$)/i.test(currentImage)
                         ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
                         : currentImage}
                     alt={project.title}
-                    className="w-full h-full object-cover select-none"
+                    className="w-full h-full object-contain select-none"
                     draggable={false}
                 />
             </div>
@@ -190,28 +190,33 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
             {/* Carousel Navigation */}
             {imageList.length > 1 && (
                 <>
+                    {/* Left Arrow */}
                     <button
                         onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => Math.max(0, i - 1)); }}
                         disabled={currentImageIndex === 0}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/80 backdrop-blur rounded-full shadow hover:bg-white transition-all disabled:opacity-30"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all disabled:opacity-20 disabled:scale-100"
                     >
-                        <ChevronLeft size={18} />
+                        <ChevronLeft size={20} strokeWidth={2.5} />
                     </button>
+                    {/* Right Arrow */}
                     <button
                         onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => Math.min(imageList.length - 1, i + 1)); }}
                         disabled={currentImageIndex === imageList.length - 1}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/80 backdrop-blur rounded-full shadow hover:bg-white transition-all disabled:opacity-30"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all disabled:opacity-20 disabled:scale-100"
                     >
-                        <ChevronRight size={18} />
+                        <ChevronRight size={20} strokeWidth={2.5} />
                     </button>
-                    <div className={`absolute left-0 right-0 flex justify-center gap-1.5 z-10 ${isEditing ? 'bottom-[76px]' : 'bottom-4'}`}>
-                        {imageList.map((_, i) => (
-                            <button
-                                key={i}
-                                onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i); }}
-                                className={`w-2 h-2 rounded-full transition-all ${i === currentImageIndex ? 'bg-white scale-110' : 'bg-white/40 hover:bg-white/70'}`}
-                            />
-                        ))}
+                    {/* Dots */}
+                    <div className={`absolute left-0 right-0 flex justify-center items-center gap-1.5 z-10 ${isEditing ? 'bottom-[76px]' : 'bottom-4'}`}>
+                        <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur px-3 py-1.5 rounded-full shadow">
+                            {imageList.map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i); }}
+                                    className={`rounded-full transition-all duration-200 ${i === currentImageIndex ? 'w-2.5 h-2.5 bg-black' : 'w-2 h-2 bg-black/25 hover:bg-black/50'}`}
+                                />
+                            ))}
+                        </div>
                     </div>
                 </>
             )}
