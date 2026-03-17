@@ -41,13 +41,13 @@ export const ArchivePage = ({ data, onArchiveUpdate, isEditing = false }: Archiv
 
   const handleAddItem = (type: 'Award' | 'Publication') => {
       if (!onArchiveUpdate) return;
-      const newItem = {
+      const newItem: Record<string, any> = {
           type,
           year: new Date().getFullYear().toString(),
           title: "New Item Title",
-          issuer: type === 'Award' ? "Issuer Name" : undefined,
-          author: type === 'Publication' ? "Author Name" : undefined,
       };
+      if (type === 'Award') newItem.issuer = "Issuer Name";
+      if (type === 'Publication') newItem.author = "Author Name";
       onArchiveUpdate('add', newItem);
   };
 
