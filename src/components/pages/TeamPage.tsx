@@ -401,7 +401,7 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
 
                         {/* 2 Col Grid */}
                         <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                            <div>
+                            <div className="min-w-0">
                                 <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Major</h4>
                                 {isLocalEditing ? (
                                     <input
@@ -411,10 +411,10 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                         className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
                                     />
                                 ) : (
-                                    <p className="text-sm font-medium text-gray-900">{formData.major || "-"}</p>
+                                    <p className="text-sm font-medium text-gray-900 truncate">{formData.major || "-"}</p>
                                 )}
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Email</h4>
                                 {isLocalEditing ? (
                                     <input
@@ -424,12 +424,12 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                         className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
                                     />
                                 ) : (
-                                    <p className="text-sm font-medium text-gray-900">{formData.email || "-"}</p>
+                                    <p className="text-sm font-medium text-gray-900 truncate">{formData.email || "-"}</p>
                                 )}
                             </div>
-                            <div>
-                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Instagram</h4>
-                                {isLocalEditing ? (
+                            {isLocalEditing && (
+                                <div className="min-w-0">
+                                    <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Instagram</h4>
                                     <input
                                         type="text"
                                         value={formData.instagram || ""}
@@ -437,15 +437,11 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                         className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
                                         placeholder="https://instagram.com/..."
                                     />
-                                ) : (
-                                    formData.instagram
-                                        ? <a href={formData.instagram} target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-900 hover:underline truncate block">{formData.instagram}</a>
-                                        : <p className="text-sm font-medium text-gray-400">-</p>
-                                )}
-                            </div>
-                            <div>
-                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">LinkedIn</h4>
-                                {isLocalEditing ? (
+                                </div>
+                            )}
+                            {isLocalEditing && (
+                                <div className="min-w-0">
+                                    <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">LinkedIn</h4>
                                     <input
                                         type="text"
                                         value={formData.linkedin || ""}
@@ -453,15 +449,11 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                         className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
                                         placeholder="https://linkedin.com/in/..."
                                     />
-                                ) : (
-                                    formData.linkedin
-                                        ? <a href={formData.linkedin} target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-900 hover:underline truncate block">{formData.linkedin}</a>
-                                        : <p className="text-sm font-medium text-gray-400">-</p>
-                                )}
-                            </div>
-                            <div>
-                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">GitHub</h4>
-                                {isLocalEditing ? (
+                                </div>
+                            )}
+                            {isLocalEditing && (
+                                <div className="min-w-0">
+                                    <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">GitHub</h4>
                                     <input
                                         type="text"
                                         value={formData.github || ""}
@@ -469,12 +461,8 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                         className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
                                         placeholder="https://github.com/..."
                                     />
-                                ) : (
-                                    formData.github
-                                        ? <a href={formData.github} target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-900 hover:underline truncate block">{formData.github}</a>
-                                        : <p className="text-sm font-medium text-gray-400">-</p>
-                                )}
-                            </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Custom Links */}
