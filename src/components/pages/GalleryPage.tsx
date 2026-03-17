@@ -120,6 +120,35 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
       }
   };
 
+  const handleAutoSave = async (id: string | number, updates: Record<string, any>) => {
+    setEditBuffer(prev => ({ ...prev, ...updates }));
+    if (typeof id === 'string') {
+      try {
+        const projectRef = doc(db, "projects", id);
+        const currentData = { ...rawSelectedProject, ...editBuffer };
+        const dataToSave: Record<string, any> = {
+          title: currentData.title,
+          type: currentData.type,
+          description: currentData.description,
+          author: currentData.author,
+          image: currentData.image,
+          site: currentData.site,
+          date: currentData.date,
+          detailContent: currentData.detailContent,
+          pdfUrl: currentData.pdfUrl,
+          ...updates
+        };
+        Object.keys(dataToSave).forEach(key => {
+          if (dataToSave[key] === undefined) delete dataToSave[key];
+        });
+        await updateDoc(projectRef, dataToSave);
+      } catch (error) {
+        console.error("Auto-save failed:", error);
+        alert("이미지 저장 실패: " + error);
+      }
+    }
+  };
+
   const handleSaveProjectToDB = async (project: any) => {
       if (typeof project.id === 'string') {
           try {
@@ -313,13 +342,14 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
         
         <AnimatePresence>
             {selectedProject && (
-                <ProjectModal 
-                    project={selectedProject} 
-                    onClose={() => { setEditBuffer({}); setSelectedProjectId(null); }} 
+                <ProjectModal
+                    project={selectedProject}
+                    onClose={() => { setEditBuffer({}); setSelectedProjectId(null); }}
                     isEditing={isEditing}
                     teamData={teamData}
                     onUpdate={(field, val) => handleUpdateProject(selectedProject.id, field, val)}
                     onSave={() => handleSaveProjectToDB(selectedProject)}
+                    onAutoSave={(updates) => handleAutoSave(selectedProject.id, updates)}
                 />
             )}
         </AnimatePresence>

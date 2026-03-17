@@ -11,9 +11,10 @@ interface ProjectModalProps {
   teamData?: any[];
   onUpdate?: (field: string | object, value?: any) => void;
   onSave?: () => void;
+  onAutoSave?: (updates: Record<string, any>) => void;
 }
 
-export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [], onUpdate, onSave }: ProjectModalProps) => {
+export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [], onUpdate, onSave, onAutoSave }: ProjectModalProps) => {
   const [scale, setScale] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   
@@ -85,14 +86,17 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
               const url = await uploadFileToCloudinary(file);
               
               if (field === 'image') {
-                  // 왼쪽 업로드: 항상 양쪽 다 업데이트
-                  onUpdate({ image: url, pdfUrl: url });
+                  const updates = { image: url, pdfUrl: url };
+                  onUpdate(updates);
+                  if (onAutoSave) onAutoSave(updates);
               } else {
-                  // 오른쪽 업로드: 이미지면 양쪽, 아니면 attachment만
                   if (file.type.startsWith('image/')) {
-                      onUpdate({ image: url, pdfUrl: url });
+                      const updates = { image: url, pdfUrl: url };
+                      onUpdate(updates);
+                      if (onAutoSave) onAutoSave(updates);
                   } else {
                       onUpdate('pdfUrl', url);
+                      if (onAutoSave) onAutoSave({ pdfUrl: url });
                   }
               }
 
