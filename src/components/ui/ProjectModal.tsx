@@ -162,7 +162,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white w-full h-full md:max-w-[80vw] md:h-[80vh] md:rounded-xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden" 
+        className="bg-white w-full h-full md:w-[900px] md:h-[580px] md:rounded-xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden" 
         onClick={(e) => e.stopPropagation()}
       >
         <button 
