@@ -199,7 +199,7 @@ export const Footer = ({ isEditing, onUpdateConfig, config, onApply }: FooterPro
                       <span className="text-[10px] md:text-xs text-gray-500 font-mono tracking-widest uppercase">
                           © 2025 TOOLBOX. ALL RIGHTS RESERVED.
                       </span>
-                      <span className="text-[9px] md:text-[10px] text-gray-600 font-mono tracking-widest uppercase">
+                      <span className="text-[9px] md:text-[10px] text-gray-500 font-mono tracking-widest uppercase">
                           DESIGNED & DEVELOPED BY KOGEON
                       </span>
                   </div>
