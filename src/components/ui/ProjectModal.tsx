@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ExternalLink, Calendar, MapPin, FileText, Download, ArrowRight, Image as ImageIcon, Upload, Link as LinkIcon, Save, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { uploadFileToCloudinary } from '../../utils/uploadService';
@@ -25,7 +25,44 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
 
   const currentImage = imageList[currentImageIndex] ?? '';
 
-  useEffect(() => { setCurrentImageIndex(0); }, [project.id]);
+  // Image position per carousel index
+  const defaultPositions = () => imageList.map((_, i) => (project.imagePositions || [])[i] || { x: 50, y: 50 });
+  const [imagePositions, setImagePositions] = useState<{x:number,y:number}[]>(defaultPositions);
+  const imagePositionsRef = useRef<{x:number,y:number}[]>(imagePositions);
+  useEffect(() => { imagePositionsRef.current = imagePositions; }, [imagePositions]);
+
+  // Drag-to-reposition
+  const imgContainerRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ isDragging: false, startX: 0, startY: 0, startPosX: 50, startPosY: 50 });
+
+  const handleImgMouseDown = (e: React.MouseEvent) => {
+    if (!isEditing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const pos = imagePositionsRef.current[currentImageIndex] || { x: 50, y: 50 };
+    dragRef.current = { isDragging: true, startX: e.clientX, startY: e.clientY, startPosX: pos.x, startPosY: pos.y };
+  };
+  const handleImgMouseMove = (e: React.MouseEvent) => {
+    if (!dragRef.current.isDragging || !imgContainerRef.current) return;
+    const { offsetWidth: w, offsetHeight: h } = imgContainerRef.current;
+    const newX = Math.min(100, Math.max(0, dragRef.current.startPosX - (e.clientX - dragRef.current.startX) / w * 100));
+    const newY = Math.min(100, Math.max(0, dragRef.current.startPosY - (e.clientY - dragRef.current.startY) / h * 100));
+    setImagePositions(prev => { const a = [...prev]; a[currentImageIndex] = { x: newX, y: newY }; return a; });
+  };
+  const handleImgMouseUp = (e: React.MouseEvent) => {
+    if (!dragRef.current.isDragging || !imgContainerRef.current) return;
+    dragRef.current.isDragging = false;
+    const { offsetWidth: w, offsetHeight: h } = imgContainerRef.current;
+    const newX = Math.min(100, Math.max(0, dragRef.current.startPosX - (e.clientX - dragRef.current.startX) / w * 100));
+    const newY = Math.min(100, Math.max(0, dragRef.current.startPosY - (e.clientY - dragRef.current.startY) / h * 100));
+    const updated = [...imagePositionsRef.current];
+    updated[currentImageIndex] = { x: newX, y: newY };
+    setImagePositions(updated);
+    if (onUpdate) onUpdate('imagePositions', updated);
+    if (onAutoSave) onAutoSave({ imagePositions: updated });
+  };
+
+  useEffect(() => { setCurrentImageIndex(0); setImagePositions(defaultPositions()); }, [project.id]);
 
   // ESC key handler
   useEffect(() => {
@@ -176,13 +213,26 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
         <div className="w-full h-[50%] md:w-[65%] lg:w-[70%] md:h-full bg-neutral-100 relative overflow-hidden flex flex-col">
 
             {/* Image */}
-            <div className="flex-1 overflow-hidden flex items-center justify-center bg-neutral-100">
+            <div
+                ref={imgContainerRef}
+                className={`flex-1 overflow-hidden flex items-center justify-center bg-neutral-100 ${isEditing ? (dragRef.current.isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+                onMouseDown={handleImgMouseDown}
+                onMouseMove={handleImgMouseMove}
+                onMouseUp={handleImgMouseUp}
+                onMouseLeave={handleImgMouseUp}
+            >
+                {isEditing && (
+                    <div className="absolute top-3 left-3 z-10 bg-black/50 text-white text-[10px] px-2 py-1 rounded pointer-events-none select-none">
+                        드래그로 위치 조정
+                    </div>
+                )}
                 <img
                     src={currentImage && /\.pdf(\?|$)/i.test(currentImage)
                         ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
                         : currentImage}
                     alt={project.title}
-                    className="w-full h-full object-cover select-none"
+                    className="w-full h-full object-cover select-none pointer-events-none"
+                    style={{ objectPosition: `${(imagePositions[currentImageIndex] || {x:50,y:50}).x}% ${(imagePositions[currentImageIndex] || {x:50,y:50}).y}%` }}
                     draggable={false}
                 />
             </div>
