@@ -154,7 +154,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm overflow-hidden"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md overflow-hidden"
       onClick={onClose}
     >
       <motion.div
@@ -162,7 +162,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white w-full h-full md:h-[550px] md:max-w-[950px] md:rounded-xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden" 
+        className="bg-white w-full h-full md:max-w-[95vw] md:h-[90vh] md:rounded-xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden" 
         onClick={(e) => e.stopPropagation()}
       >
         <button 
@@ -173,7 +173,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
         </button>
 
         {/* Left Side: Image Viewer */}
-        <div className="w-full h-[50%] md:w-[55%] md:h-full bg-neutral-100 relative overflow-hidden flex flex-col">
+        <div className="w-full h-[50%] md:w-[65%] lg:w-[70%] md:h-full bg-neutral-100 relative overflow-hidden flex flex-col">
 
             {/* Image */}
             <div className="flex-1 overflow-hidden flex items-center justify-center bg-neutral-100">
@@ -275,10 +275,10 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar">
                 {/* Header */}
-                <div className="mt-1 mb-4">
-                    <div className="flex items-center gap-2 mb-2">
+                <div className="mt-2 mb-8">
+                    <div className="flex items-center gap-2 mb-4">
                         <span className="px-2 py-1 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded">
                             <EditableField
                                 value={project.type || "Project"}
@@ -288,7 +288,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                         </span>
                     </div>
 
-                    <h2 className="text-xl font-black mb-1 tracking-tight leading-tight">
+                    <h2 className="text-3xl font-black mb-2 tracking-tight leading-tight">
                         <EditableField
                             value={project.title}
                             onSave={(val) => handleUpdate('title', val)}
@@ -297,7 +297,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                     </h2>
                     
                     {project.type !== 'Activities' && (
-                    <div className="text-xs font-mono text-gray-500 mb-3">
+                    <div className="text-sm font-mono text-gray-500 mb-6">
                         {isEditing ? (
                             <div className="relative">
                                 <select
@@ -324,8 +324,8 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                     </div>
                     )}
 
-                     <div className="border-b border-gray-100 pb-3 mb-3">
-                        <div className="text-xs text-gray-700 font-medium leading-relaxed">
+                     <div className="border-b border-gray-100 pb-6 mb-6">
+                        <div className="text-base text-gray-700 font-medium leading-relaxed">
                             <EditableField
                                 value={project.description || "No description available."}
                                 onSave={(val) => handleUpdate('description', val)}
@@ -336,7 +336,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                     </div>
 
                     {/* Meta Grid */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="grid grid-cols-2 gap-4 mb-8">
                          <div>
                             <h4 className="font-bold text-[10px] uppercase tracking-widest text-gray-400 mb-1 flex items-center gap-1">
                                 <MapPin size={10} /> Location
@@ -364,16 +364,17 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                     </div>
 
                     {/* Detail Content */}
-                    <div className="mb-4">
-                        <h4 className="font-bold text-[10px] uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-1">
+                    <div className="mb-8">
+                        <h4 className="font-bold text-[10px] uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-1">
                              <FileText size={10} /> Project Details
                         </h4>
-                        <div className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
+                        <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
                             <EditableField
                                 value={project.detailContent || "Add detailed project description here..."}
                                 onSave={(val) => handleUpdate('detailContent', val)}
                                 isEditing={isEditing}
                                 multiline={true}
+                                className="min-h-[100px]"
                             />
                         </div>
                     </div>
@@ -381,7 +382,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
             </div>
 
             {/* Footer Action */}
-            <div className="p-4 border-t border-gray-100 bg-gray-50">
+            <div className="p-6 border-t border-gray-100 bg-gray-50">
                  {isEditing ? (
                     <div className="flex flex-col gap-3">
                          <div className="flex items-center justify-between">
