@@ -189,7 +189,8 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
     const [formData, setFormData] = useState(member);
     const [isUploading, setIsUploading] = useState(false);
 
-    const isLocked = ['park', 'yoo'].some(n => member.name?.toLowerCase().includes(n));
+    const lockedNames = ['park gyeong', 'yoo seung'];
+    const isLocked = lockedNames.some(n => member.name?.toLowerCase().includes(n));
 
     // Reset form data when member changes
     useEffect(() => {
