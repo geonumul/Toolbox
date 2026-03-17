@@ -402,30 +402,22 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                     <a href={`mailto:${formData.email}`} className="text-white/70 hover:text-white transition-colors" title={formData.email}>
                                         <Mail size={16} />
                                     </a>
-                                ) : (
-                                    <span className="text-white/20"><Mail size={16} /></span>
-                                )}
+                                ) : null}
                                 {formData.instagram ? (
                                     <a href={formData.instagram} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white transition-colors" title="Instagram">
                                         <Instagram size={16} />
                                     </a>
-                                ) : (
-                                    <span className="text-white/20"><Instagram size={16} /></span>
-                                )}
+                                ) : null}
                                 {formData.linkedin ? (
                                     <a href={formData.linkedin} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white transition-colors" title="LinkedIn">
                                         <Linkedin size={16} />
                                     </a>
-                                ) : (
-                                    <span className="text-white/20"><Linkedin size={16} /></span>
-                                )}
+                                ) : null}
                                 {formData.github ? (
                                     <a href={formData.github} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white transition-colors" title="GitHub">
                                         <Github size={16} />
                                     </a>
-                                ) : (
-                                    <span className="text-white/20"><Github size={16} /></span>
-                                )}
+                                ) : null}
                             </div>
                         </div>
                     )}
