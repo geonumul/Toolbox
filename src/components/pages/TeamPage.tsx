@@ -95,6 +95,58 @@ export const TeamPage = ({
     }
   };
 
+  const members = data.filter((m) => !m.alumni);
+  const alumni = data.filter((m) => m.alumni === true);
+
+  const handleToggleAlumni = async (e: React.MouseEvent, id: string | number, currentVal: boolean) => {
+    e.stopPropagation();
+    if (typeof id === 'string') {
+      try {
+        await updateDoc(doc(db, "team", id), { alumni: !currentVal });
+      } catch (error) {
+        console.error("Error toggling alumni:", error);
+      }
+    }
+  };
+
+  const renderMemberCard = (member: any, isAlumniSection = false) => (
+    <div
+      key={member.id}
+      onClick={() => setSelectedMemberId(member.id)}
+      className="group cursor-pointer flex flex-col relative"
+    >
+      {isEditing && (
+        <button
+          onClick={(e) => handleDeleteMember(e, member.id)}
+          className="absolute top-2 right-2 z-20 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
+      {isEditing && (
+        <button
+          onClick={(e) => handleToggleAlumni(e, member.id, !!member.alumni)}
+          className="absolute top-2 left-2 z-20 bg-black text-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-700"
+        >
+          {isAlumniSection ? '→ Member' : '→ Alumni'}
+        </button>
+      )}
+
+      <div className="aspect-[4/3] overflow-hidden bg-gray-100 mb-5 grayscale group-hover:grayscale-0 transition-all duration-700 ease-out relative">
+        <img
+          src={member.image}
+          alt={member.name}
+          className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+        />
+      </div>
+
+      <div className="space-y-1">
+        <h3 className="text-base font-bold uppercase tracking-tight text-black block">{member.name}</h3>
+        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest block">{member.role}</p>
+      </div>
+    </div>
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -103,55 +155,27 @@ export const TeamPage = ({
       className="min-h-screen pt-40 px-6 pb-24 bg-white text-black"
     >
       <div className="max-w-[1400px] mx-auto">
-        {/* Header */}
+        {/* Members Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-6 border-b border-gray-200">
           <div className="max-w-3xl">
             <h1 className="text-5xl md:text-6xl font-light tracking-tight mb-3">
               Members
             </h1>
             <p className="text-gray-400 font-medium text-[10px] md:text-[11px] uppercase tracking-[0.2em]">
-              A COLLECTIVE OF {data.length} MINDS PUSHING THE
+              A COLLECTIVE OF {members.length} MINDS PUSHING THE
               BOUNDARIES OF SPATIAL DESIGN.
             </p>
           </div>
           <div className="mt-4 md:mt-0 font-bold text-[10px] md:text-[11px] tracking-widest uppercase text-gray-900">
-            {String(data.length).padStart(2, "0")} DESIGNERS
+            {String(members.length).padStart(2, "0")} DESIGNERS
           </div>
         </div>
 
-        {/* Grid */}
+        {/* Members Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
-          {data.map((member) => (
-            <div
-              key={member.id}
-              onClick={() => setSelectedMemberId(member.id)}
-              className="group cursor-pointer flex flex-col relative"
-            >
-              {isEditing && (
-                <button
-                  onClick={(e) => handleDeleteMember(e, member.id)}
-                  className="absolute top-2 right-2 z-20 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 size={16} />
-                </button>
-              )}
+          {members.map((member) => renderMemberCard(member, false))}
 
-              <div className="aspect-[4/3] overflow-hidden bg-gray-100 mb-5 grayscale group-hover:grayscale-0 transition-all duration-700 ease-out relative">
-                 <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-                  />
-              </div>
-
-              <div className="space-y-1">
-                 <h3 className="text-base font-bold uppercase tracking-tight text-black block">{member.name}</h3>
-                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest block">{member.role}</p>
-              </div>
-            </div>
-          ))}
-
-          {(isEditing || data.length === 0) && (
+          {isEditing && (
             <div
               onClick={handleAddMember}
               className="aspect-[4/3] border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition-colors cursor-pointer group"
@@ -165,6 +189,29 @@ export const TeamPage = ({
             </div>
           )}
         </div>
+
+        {/* Alumni Section */}
+        {(alumni.length > 0 || isEditing) && (
+          <div className="mt-24">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-6 border-b border-gray-200">
+              <div className="max-w-3xl">
+                <h2 className="text-5xl md:text-6xl font-light tracking-tight mb-3">
+                  Alumni
+                </h2>
+                <p className="text-gray-400 font-medium text-[10px] md:text-[11px] uppercase tracking-[0.2em]">
+                  FORMER MEMBERS WHO SHAPED OUR COLLECTIVE.
+                </p>
+              </div>
+              <div className="mt-4 md:mt-0 font-bold text-[10px] md:text-[11px] tracking-widest uppercase text-gray-900">
+                {String(alumni.length).padStart(2, "0")} ALUMNI
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
+              {alumni.map((member) => renderMemberCard(member, true))}
+            </div>
+          </div>
+        )}
       </div>
 
       <AnimatePresence>
