@@ -291,28 +291,28 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                         <Mail size={16} />
                                     </a>
                                 ) : (
-                                    <span className="text-white/20 cursor-not-allowed"><Mail size={16} /></span>
+                                    <span className="text-white/20"><Mail size={16} /></span>
                                 )}
                                 {formData.instagram ? (
                                     <a href={formData.instagram} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white transition-colors" title="Instagram">
                                         <Instagram size={16} />
                                     </a>
                                 ) : (
-                                    <span className="text-white/20 cursor-not-allowed"><Instagram size={16} /></span>
+                                    <span className="text-white/20"><Instagram size={16} /></span>
                                 )}
                                 {formData.linkedin ? (
                                     <a href={formData.linkedin} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white transition-colors" title="LinkedIn">
                                         <Linkedin size={16} />
                                     </a>
                                 ) : (
-                                    <span className="text-white/20 cursor-not-allowed"><Linkedin size={16} /></span>
+                                    <span className="text-white/20"><Linkedin size={16} /></span>
                                 )}
                                 {formData.github ? (
                                     <a href={formData.github} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white transition-colors" title="GitHub">
                                         <Github size={16} />
                                     </a>
                                 ) : (
-                                    <span className="text-white/20 cursor-not-allowed"><Github size={16} /></span>
+                                    <span className="text-white/20"><Github size={16} /></span>
                                 )}
                             </div>
                         </div>
