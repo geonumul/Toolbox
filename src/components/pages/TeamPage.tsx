@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Mail, Plus, Trash2, Edit3, Check, Instagram, Linkedin, Link as LinkIcon, Upload } from "lucide-react";
+import { X, Mail, Plus, Trash2, Edit3, Check, Instagram, Linkedin, Github, Link as LinkIcon, Upload } from "lucide-react";
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
@@ -64,6 +64,7 @@ export const TeamPage = ({
           email: "email@example.com",
           instagram: "",
           linkedin: "",
+          github: "",
           customLinks: [],
           interests: "Urban Regeneration, Data Visualization",
           software: "Rhino, Grasshopper, Unreal Engine",
@@ -284,11 +285,34 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                         <div className="absolute bottom-0 left-0 w-full p-8 text-white z-10">
                             <h2 className="text-2xl font-bold mb-1">{formData.name}</h2>
                             <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-70 mb-4">{formData.role}</p>
-                            <div className="flex gap-3 text-white/70">
-                                {formData.email && (
-                                    <a href={`mailto:${formData.email}`} className="hover:text-white transition-colors">
+                            <div className="flex gap-3">
+                                {formData.email ? (
+                                    <a href={`mailto:${formData.email}`} className="text-white/70 hover:text-white transition-colors" title={formData.email}>
                                         <Mail size={16} />
                                     </a>
+                                ) : (
+                                    <span className="text-white/20 cursor-not-allowed"><Mail size={16} /></span>
+                                )}
+                                {formData.instagram ? (
+                                    <a href={formData.instagram} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white transition-colors" title="Instagram">
+                                        <Instagram size={16} />
+                                    </a>
+                                ) : (
+                                    <span className="text-white/20 cursor-not-allowed"><Instagram size={16} /></span>
+                                )}
+                                {formData.linkedin ? (
+                                    <a href={formData.linkedin} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white transition-colors" title="LinkedIn">
+                                        <Linkedin size={16} />
+                                    </a>
+                                ) : (
+                                    <span className="text-white/20 cursor-not-allowed"><Linkedin size={16} /></span>
+                                )}
+                                {formData.github ? (
+                                    <a href={formData.github} target="_blank" rel="noreferrer" className="text-white/70 hover:text-white transition-colors" title="GitHub">
+                                        <Github size={16} />
+                                    </a>
+                                ) : (
+                                    <span className="text-white/20 cursor-not-allowed"><Github size={16} /></span>
                                 )}
                             </div>
                         </div>
@@ -380,8 +404,8 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                             <div>
                                 <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Major</h4>
                                 {isLocalEditing ? (
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         value={formData.major || ""}
                                         onChange={(e) => handleChange('major', e.target.value)}
                                         className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
@@ -393,14 +417,62 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                             <div>
                                 <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Email</h4>
                                 {isLocalEditing ? (
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         value={formData.email || ""}
                                         onChange={(e) => handleChange('email', e.target.value)}
                                         className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
                                     />
                                 ) : (
                                     <p className="text-sm font-medium text-gray-900">{formData.email || "-"}</p>
+                                )}
+                            </div>
+                            <div>
+                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Instagram</h4>
+                                {isLocalEditing ? (
+                                    <input
+                                        type="text"
+                                        value={formData.instagram || ""}
+                                        onChange={(e) => handleChange('instagram', e.target.value)}
+                                        className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
+                                        placeholder="https://instagram.com/..."
+                                    />
+                                ) : (
+                                    formData.instagram
+                                        ? <a href={formData.instagram} target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-900 hover:underline truncate block">{formData.instagram}</a>
+                                        : <p className="text-sm font-medium text-gray-400">-</p>
+                                )}
+                            </div>
+                            <div>
+                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">LinkedIn</h4>
+                                {isLocalEditing ? (
+                                    <input
+                                        type="text"
+                                        value={formData.linkedin || ""}
+                                        onChange={(e) => handleChange('linkedin', e.target.value)}
+                                        className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
+                                        placeholder="https://linkedin.com/in/..."
+                                    />
+                                ) : (
+                                    formData.linkedin
+                                        ? <a href={formData.linkedin} target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-900 hover:underline truncate block">{formData.linkedin}</a>
+                                        : <p className="text-sm font-medium text-gray-400">-</p>
+                                )}
+                            </div>
+                            <div>
+                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">GitHub</h4>
+                                {isLocalEditing ? (
+                                    <input
+                                        type="text"
+                                        value={formData.github || ""}
+                                        onChange={(e) => handleChange('github', e.target.value)}
+                                        className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
+                                        placeholder="https://github.com/..."
+                                    />
+                                ) : (
+                                    formData.github
+                                        ? <a href={formData.github} target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-900 hover:underline truncate block">{formData.github}</a>
+                                        : <p className="text-sm font-medium text-gray-400">-</p>
                                 )}
                             </div>
                         </div>

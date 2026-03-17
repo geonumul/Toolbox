@@ -148,20 +148,20 @@ function App() {
   const renderPage = () => {
     switch(page) {
       case 'gallery':
-        return <GalleryPage 
-          data={projects.length > 0 ? projects : data.gallery} 
-          initialTab="Projects" 
-          teamData={data.team} 
-          updateData={updateData} 
-          isEditing={isEditing} 
+        return <GalleryPage
+          data={projects.length > 0 ? projects : data.gallery}
+          initialTab="Projects"
+          teamData={teamMembers.length > 0 ? teamMembers : data.team}
+          updateData={updateData}
+          isEditing={isEditing}
         />;
-      case 'activities': 
-        return <GalleryPage 
-          data={projects.length > 0 ? projects : data.gallery} 
-          initialTab="Activities" 
-          teamData={data.team} 
-          updateData={updateData} 
-          isEditing={isEditing} 
+      case 'activities':
+        return <GalleryPage
+          data={projects.length > 0 ? projects : data.gallery}
+          initialTab="Activities"
+          teamData={teamMembers.length > 0 ? teamMembers : data.team}
+          updateData={updateData}
+          isEditing={isEditing}
         />;
       case 'schedule':
         return <SchedulePage data={schedules.length > 0 ? schedules : data.schedule} updateData={updateData} isEditing={isEditing} />;

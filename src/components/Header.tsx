@@ -79,16 +79,14 @@ export const Header = ({
   return (
     <div>
       <header className="absolute top-0 left-0 right-0 z-50 mix-blend-difference text-white p-4 md:p-10 flex justify-between items-center pointer-events-none">
-        {/* Left: Logo (Visible on all pages except HOME) */}
+        {/* Left: Logo */}
         <div className="pointer-events-auto">
-            {currentPage !== 'home' && (
-                <button 
-                    onClick={() => setPage('home')}
-                    className="font-black text-2xl tracking-tighter hover:opacity-70 transition-opacity"
-                >
-                    TOOLBOX
-                </button>
-            )}
+            <button
+                onClick={() => setPage('home')}
+                className="font-black text-2xl tracking-tighter hover:opacity-70 transition-opacity"
+            >
+                TOOLBOX
+            </button>
         </div>
 
         <div className="pointer-events-auto flex items-center gap-6 md:gap-8">

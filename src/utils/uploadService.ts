@@ -27,12 +27,14 @@ export interface ProjectData {
  * Uploads a file to Cloudinary and returns the secure URL.
  */
 export const uploadFileToCloudinary = async (file: File): Promise<string> => {
-  // FALLBACK: If config is missing, use a local object URL (mock upload)
-  // This allows the app to function without crashing if .env is not set up.
+  // FALLBACK: If config is missing, convert to base64 data URL so it can persist in Firestore
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
-    console.warn("Cloudinary config missing. Falling back to local object URL.");
-    // Create a local URL for preview purposes
-    return URL.createObjectURL(file);
+    console.warn("Cloudinary config missing. Falling back to base64 data URL.");
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
   }
 
   const formData = new FormData();
@@ -47,8 +49,12 @@ export const uploadFileToCloudinary = async (file: File): Promise<string> => {
     return res.data.secure_url;
   } catch (error) {
     console.error("Cloudinary upload failed:", error);
-    // Fallback on error too, so user doesn't get stuck
-    return URL.createObjectURL(file);
+    // Fallback on error: convert to base64 so the image persists
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
   }
 };
 
