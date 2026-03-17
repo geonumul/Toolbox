@@ -76,6 +76,31 @@ export const TeamPage = ({
     }
   };
 
+  // Firestore add alumni
+  const handleAddAlumni = async () => {
+    try {
+        await addDoc(collection(db, "team"), {
+          name: "Alumni Name",
+          role: "Designer",
+          image: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+          bio: "Introduction...",
+          major: "Spatial Design",
+          email: "email@example.com",
+          instagram: "",
+          linkedin: "",
+          github: "",
+          customLinks: [],
+          interests: "",
+          software: "",
+          alumni: true,
+          createdAt: new Date()
+        });
+    } catch (error) {
+        console.error("Error adding alumni: ", error);
+        alert("Failed to add alumni: " + error);
+    }
+  };
+
   // Firestore delete
   const handleDeleteMember = async (e: React.MouseEvent, id: string | number) => {
     e.stopPropagation();
@@ -189,6 +214,20 @@ export const TeamPage = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
               {alumni.map((member) => renderMemberCard(member))}
+
+              {isEditing && (
+                <div
+                  onClick={handleAddAlumni}
+                  className="aspect-[4/3] border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition-colors cursor-pointer group"
+                >
+                  <div className="p-4 rounded-full border border-transparent group-hover:border-black transition-all mb-4">
+                    <Plus size={24} strokeWidth={1} />
+                  </div>
+                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase">
+                    Add Alumni
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
