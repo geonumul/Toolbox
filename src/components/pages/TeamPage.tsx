@@ -65,6 +65,7 @@ export const TeamPage = ({
           instagram: "",
           linkedin: "",
           github: "",
+          portfolio: "",
           customLinks: [],
           interests: "Urban Regeneration, Data Visualization",
           software: "Rhino, Grasshopper, Unreal Engine",
@@ -89,6 +90,7 @@ export const TeamPage = ({
           instagram: "",
           linkedin: "",
           github: "",
+          portfolio: "",
           customLinks: [],
           interests: "",
           software: "",
@@ -535,6 +537,24 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                     />
                                 ) : (
                                     <p className="text-sm font-medium text-gray-900 truncate">{formData.email || "-"}</p>
+                                )}
+                            </div>
+                            <div className="min-w-0 col-span-2">
+                                <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">Portfolio</h4>
+                                {isLocalEditing ? (
+                                    <input
+                                        type="text"
+                                        value={formData.portfolio || ""}
+                                        onChange={(e) => handleChange('portfolio', e.target.value)}
+                                        className="w-full border border-gray-200 p-1 text-xs rounded focus:border-black outline-none"
+                                        placeholder="https://..."
+                                    />
+                                ) : formData.portfolio ? (
+                                    <a href={formData.portfolio} target="_blank" rel="noreferrer" className="text-sm font-medium text-gray-900 hover:underline truncate block">
+                                        {formData.portfolio}
+                                    </a>
+                                ) : (
+                                    <p className="text-sm font-medium text-gray-900">-</p>
                                 )}
                             </div>
                             {isLocalEditing && (
