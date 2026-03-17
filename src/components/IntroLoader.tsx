@@ -5,7 +5,8 @@ export const IntroLoader = ({ onComplete }: { onComplete: () => void }) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const duration = 550;
+    const isMobile = window.innerWidth < 768;
+    const duration = isMobile ? 300 : 550;
     const intervalTime = 10;
     const steps = duration / intervalTime;
     let currentStep = 0;
