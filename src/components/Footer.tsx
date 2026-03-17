@@ -195,9 +195,14 @@ export const Footer = ({ isEditing, onUpdateConfig, config, onApply }: FooterPro
               <div className="h-px w-full bg-gray-800 mb-8" />
               
               <div className="flex justify-between items-center">
-                  <span className="text-[10px] md:text-xs text-gray-500 font-mono tracking-widest uppercase">
-                      © 2025 TOOLBOX. ALL RIGHTS RESERVED.
-                  </span>
+                  <div className="flex flex-col gap-1">
+                      <span className="text-[10px] md:text-xs text-gray-500 font-mono tracking-widest uppercase">
+                          © 2025 TOOLBOX. ALL RIGHTS RESERVED.
+                      </span>
+                      <span className="text-[9px] md:text-[10px] text-gray-600 font-mono tracking-widest uppercase">
+                          DESIGNED & DEVELOPED BY KOGEON
+                      </span>
+                  </div>
   
                   <button 
                       onClick={scrollToTop}
