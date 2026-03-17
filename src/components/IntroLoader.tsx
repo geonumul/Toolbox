@@ -5,7 +5,7 @@ export const IntroLoader = ({ onComplete }: { onComplete: () => void }) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const duration = 800; // Reduced to 0.8 seconds for faster loading
+    const duration = 550;
     const intervalTime = 10;
     const steps = duration / intervalTime;
     let currentStep = 0;
