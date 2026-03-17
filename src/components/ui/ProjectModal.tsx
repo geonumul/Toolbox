@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ExternalLink, Calendar, MapPin, FileText, Download, ArrowRight, Maximize2, Minimize2, ZoomIn, ZoomOut, Image as ImageIcon, Upload, Link as LinkIcon, RefreshCw, Save } from 'lucide-react';
+import { X, ExternalLink, Calendar, MapPin, FileText, Download, ArrowRight, Maximize2, Minimize2, ZoomIn, ZoomOut, Image as ImageIcon, Upload, Link as LinkIcon, RefreshCw, Save, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { uploadFileToCloudinary } from '../../utils/uploadService';
 import { EditableField } from './EditableField';
 
@@ -18,7 +18,16 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
   const [scale, setScale] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const imageList: string[] = (project.images && project.images.length > 0)
+    ? project.images
+    : (project.image ? [project.image] : []);
+
+  const currentImage = imageList[currentImageIndex] ?? '';
+
+  useEffect(() => { setCurrentImageIndex(0); }, [project.id]);
+
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -111,6 +120,38 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
       }
   };
 
+  const handleAddImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !onUpdate) return;
+    if (imageList.length >= 10) { alert("최대 10장까지 업로드할 수 있습니다."); return; }
+    setIsUploading(true);
+    setUploadProgress(0);
+    try {
+      const url = await uploadFileToCloudinary(file, setUploadProgress);
+      const newImages = [...imageList, url];
+      const updates = { images: newImages, image: newImages[0], pdfUrl: newImages[0] };
+      onUpdate(updates);
+      if (onAutoSave) onAutoSave(updates);
+      setCurrentImageIndex(newImages.length - 1);
+    } catch {
+      alert("Upload failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = imageList.filter((_, i) => i !== index);
+    const updates = newImages.length > 0
+      ? { images: newImages, image: newImages[0], pdfUrl: newImages[0] }
+      : { images: [], image: '', pdfUrl: '' };
+    onUpdate?.(updates);
+    if (onAutoSave) onAutoSave(updates);
+    setCurrentImageIndex(Math.min(currentImageIndex, Math.max(0, newImages.length - 1)));
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
       e.preventDefault();
       setIsDragging(true);
@@ -199,7 +240,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
              </div>
 
             {/* Image Container */}
-            <div 
+            <div
                 ref={imageContainerRef}
                 className={`flex-1 overflow-hidden flex items-center justify-center bg-[#f5f5f5] cursor-grab ${isDragging ? 'cursor-grabbing' : ''}`}
                 onMouseDown={handleMouseDown}
@@ -207,7 +248,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
             >
-                <div 
+                <div
                     style={{
                         transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
                         transition: isDragging ? 'none' : 'transform 0.1s ease-out',
@@ -215,9 +256,9 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                     }}
                     className="relative"
                 >
-                    {project.image && /\.pdf(\?|$)/i.test(project.image) ? (
+                    {currentImage && /\.pdf(\?|$)/i.test(currentImage) ? (
                         <img
-                            src={project.image.replace('/upload/', '/upload/pg_1,f_jpg/')}
+                            src={currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')}
                             alt={project.title}
                             className="max-w-none shadow-xl pointer-events-none select-none"
                             style={{ maxWidth: '100%', maxHeight: '80vh' }}
@@ -225,7 +266,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                         />
                     ) : (
                         <img
-                            src={project.image}
+                            src={currentImage}
                             alt={project.title}
                             className="max-w-none shadow-xl pointer-events-none select-none"
                             style={{ maxWidth: '100%', maxHeight: '80vh' }}
@@ -234,44 +275,73 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                     )}
                 </div>
             </div>
-            
+
+            {/* Carousel Navigation */}
+            {imageList.length > 1 && (
+                <>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); resetView(); setCurrentImageIndex(i => Math.max(0, i - 1)); }}
+                        disabled={currentImageIndex === 0}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/80 backdrop-blur rounded-full shadow hover:bg-white transition-all disabled:opacity-30"
+                    >
+                        <ChevronLeft size={18} />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); resetView(); setCurrentImageIndex(i => Math.min(imageList.length - 1, i + 1)); }}
+                        disabled={currentImageIndex === imageList.length - 1}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/80 backdrop-blur rounded-full shadow hover:bg-white transition-all disabled:opacity-30"
+                    >
+                        <ChevronRight size={18} />
+                    </button>
+                    <div className={`absolute left-0 right-0 flex justify-center gap-1.5 z-10 ${isEditing ? 'bottom-[88px]' : 'bottom-12'}`}>
+                        {imageList.map((_, i) => (
+                            <button
+                                key={i}
+                                onClick={(e) => { e.stopPropagation(); resetView(); setCurrentImageIndex(i); }}
+                                className={`w-2 h-2 rounded-full transition-all ${i === currentImageIndex ? 'bg-black scale-110' : 'bg-black/30 hover:bg-black/60'}`}
+                            />
+                        ))}
+                    </div>
+                </>
+            )}
+
             {/* Edit Image Overlay */}
             {isEditing && (
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 border-t border-gray-200 z-20">
-                    <div className="flex flex-col gap-2">
-                         <label className="text-[10px] font-bold uppercase text-gray-500 flex items-center gap-2">
-                             <ImageIcon size={12} /> Update Project Image / File
-                         </label>
-                         <div className="flex gap-2">
-                            <input 
-                                type="text"
-                                value={project.image}
-                                onChange={(e) => handleUpdate('image', e.target.value)}
-                                className="w-full bg-white border border-gray-300 p-2 text-xs rounded shadow-sm focus:border-black outline-none"
-                                placeholder="Paste URL here..."
-                            />
-                            {isUploading ? (
-                                <div className="flex flex-col justify-center gap-1 min-w-[90px]">
-                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                        <div
-                                            className="bg-black h-1.5 rounded-full transition-all duration-200"
-                                            style={{ width: `${uploadProgress}%` }}
-                                        />
-                                    </div>
-                                    <span className="text-[10px] text-center text-gray-500 font-bold">{uploadProgress}%</span>
+                <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/90 border-t border-gray-200 z-20">
+                    <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold uppercase text-gray-400 whitespace-nowrap flex items-center gap-1">
+                            <ImageIcon size={11} /> {imageList.length}/10
+                        </label>
+                        <div className="flex gap-2 overflow-x-auto flex-1">
+                            {imageList.map((img, i) => (
+                                <div
+                                    key={i}
+                                    onClick={() => { resetView(); setCurrentImageIndex(i); }}
+                                    className={`relative flex-shrink-0 w-12 h-12 rounded overflow-hidden border-2 cursor-pointer transition-all ${i === currentImageIndex ? 'border-black' : 'border-transparent'}`}
+                                >
+                                    <img src={img} className="w-full h-full object-cover" alt="" />
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleRemoveImage(i); }}
+                                        className="absolute top-0 right-0 bg-red-500 text-white p-0.5 rounded-bl"
+                                    >
+                                        <X size={9} />
+                                    </button>
                                 </div>
-                            ) : (
-                                <label className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold uppercase cursor-pointer transition-colors whitespace-nowrap">
-                                    <Upload size={14} />
-                                    <input
-                                        type="file"
-                                        className="hidden"
-                                        onChange={(e) => handleFileUpload(e, 'image')}
-                                    />
-                                    Upload
+                            ))}
+                            {isUploading ? (
+                                <div className="flex-shrink-0 w-12 h-12 rounded border border-gray-200 flex flex-col items-center justify-center gap-1">
+                                    <div className="w-8 bg-gray-200 rounded-full h-1">
+                                        <div className="bg-black h-1 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+                                    </div>
+                                    <span className="text-[9px] text-gray-500 font-bold">{uploadProgress}%</span>
+                                </div>
+                            ) : imageList.length < 10 ? (
+                                <label className="flex-shrink-0 w-12 h-12 rounded border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-gray-500 transition-colors">
+                                    <Plus size={16} className="text-gray-400" />
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleAddImage} />
                                 </label>
-                            )}
-                         </div>
+                            ) : null}
+                        </div>
                     </div>
                 </div>
             )}
