@@ -98,18 +98,7 @@ export const TeamPage = ({
   const members = data.filter((m) => !m.alumni);
   const alumni = data.filter((m) => m.alumni === true);
 
-  const handleToggleAlumni = async (e: React.MouseEvent, id: string | number, currentVal: boolean) => {
-    e.stopPropagation();
-    if (typeof id === 'string') {
-      try {
-        await updateDoc(doc(db, "team", id), { alumni: !currentVal });
-      } catch (error) {
-        console.error("Error toggling alumni:", error);
-      }
-    }
-  };
-
-  const renderMemberCard = (member: any, isAlumniSection = false) => (
+  const renderMemberCard = (member: any) => (
     <div
       key={member.id}
       onClick={() => setSelectedMemberId(member.id)}
@@ -123,15 +112,6 @@ export const TeamPage = ({
           <Trash2 size={16} />
         </button>
       )}
-      {isEditing && (
-        <button
-          onClick={(e) => handleToggleAlumni(e, member.id, !!member.alumni)}
-          className="absolute top-2 left-2 z-20 bg-black text-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-700"
-        >
-          {isAlumniSection ? '→ Member' : '→ Alumni'}
-        </button>
-      )}
-
       <div className="aspect-[4/3] overflow-hidden bg-gray-100 mb-5 grayscale group-hover:grayscale-0 transition-all duration-700 ease-out relative">
         <img
           src={member.image}
@@ -173,7 +153,7 @@ export const TeamPage = ({
 
         {/* Members Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
-          {members.map((member) => renderMemberCard(member, false))}
+          {members.map((member) => renderMemberCard(member))}
 
           {isEditing && (
             <div
@@ -208,7 +188,7 @@ export const TeamPage = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
-              {alumni.map((member) => renderMemberCard(member, true))}
+              {alumni.map((member) => renderMemberCard(member))}
             </div>
           </div>
         )}
