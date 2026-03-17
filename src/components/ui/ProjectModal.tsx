@@ -182,7 +182,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                         ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
                         : currentImage}
                     alt={project.title}
-                    className="w-full h-full object-contain select-none"
+                    className="w-full h-full object-cover select-none"
                     draggable={false}
                 />
             </div>
