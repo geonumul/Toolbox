@@ -23,37 +23,72 @@ export interface ProjectData {
   file: File;
 }
 
+const compressImage = async (file: File, maxWidth = 1200, quality = 0.82): Promise<File> => {
+  if (!file.type.startsWith('image/')) return file;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file),
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => resolve(file);
+    img.src = url;
+  });
+};
+
 /**
  * Uploads a file to Cloudinary and returns the secure URL.
  */
-export const uploadFileToCloudinary = async (file: File): Promise<string> => {
+export const uploadFileToCloudinary = async (file: File, onProgress?: (percent: number) => void): Promise<string> => {
+  const fileToUpload = await compressImage(file);
+
   // FALLBACK: If config is missing, convert to base64 data URL so it can persist in Firestore
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
     console.warn("Cloudinary config missing. Falling back to base64 data URL.");
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(fileToUpload);
     });
   }
 
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', fileToUpload);
   formData.append('upload_preset', UPLOAD_PRESET);
-  
+
   try {
     const res = await axios.post(
       `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
-      formData
+      formData,
+      {
+        onUploadProgress: (e) => {
+          if (onProgress && e.total) {
+            onProgress(Math.round((e.loaded * 100) / e.total));
+          }
+        }
+      }
     );
     return res.data.secure_url;
   } catch (error) {
     console.error("Cloudinary upload failed:", error);
-    // Fallback on error: convert to base64 so the image persists
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(fileToUpload);
     });
   }
 };

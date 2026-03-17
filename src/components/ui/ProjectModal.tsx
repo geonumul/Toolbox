@@ -17,6 +17,7 @@ interface ProjectModalProps {
 export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [], onUpdate, onSave, onAutoSave }: ProjectModalProps) => {
   const [scale, setScale] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -81,9 +82,9 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
       const file = e.target.files?.[0];
       if (file && onUpdate) {
           setIsUploading(true);
+          setUploadProgress(0);
           try {
-              // Upload to Cloudinary immediately
-              const url = await uploadFileToCloudinary(file);
+              const url = await uploadFileToCloudinary(file, setUploadProgress);
               
               if (field === 'image') {
                   const updates = { image: url, pdfUrl: url };
@@ -105,6 +106,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
               alert("File upload failed. Please try again.");
           } finally {
               setIsUploading(false);
+              setUploadProgress(0);
           }
       }
   };
@@ -248,16 +250,27 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                                 className="w-full bg-white border border-gray-300 p-2 text-xs rounded shadow-sm focus:border-black outline-none"
                                 placeholder="Paste URL here..."
                             />
-                            <label className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold uppercase cursor-pointer transition-colors whitespace-nowrap">
-                                <Upload size={14} />
-                                <input 
-                                    type="file" 
-                                    className="hidden" 
-                                    onChange={(e) => handleFileUpload(e, 'image')}
-                                    disabled={isUploading}
-                                />
-                                {isUploading ? 'Uploading...' : 'Upload'}
-                            </label>
+                            {isUploading ? (
+                                <div className="flex flex-col justify-center gap-1 min-w-[90px]">
+                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div
+                                            className="bg-black h-1.5 rounded-full transition-all duration-200"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-[10px] text-center text-gray-500 font-bold">{uploadProgress}%</span>
+                                </div>
+                            ) : (
+                                <label className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold uppercase cursor-pointer transition-colors whitespace-nowrap">
+                                    <Upload size={14} />
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        onChange={(e) => handleFileUpload(e, 'image')}
+                                    />
+                                    Upload
+                                </label>
+                            )}
                          </div>
                     </div>
                 </div>
@@ -411,15 +424,27 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                                 />
                              </div>
                              
-                             <label className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold uppercase cursor-pointer transition-colors">
-                                <Upload size={14} />
-                                <input 
-                                    type="file" 
-                                    className="hidden" 
-                                    onChange={(e) => handleFileUpload(e, 'pdfUrl')}
-                                />
-                                File
-                             </label>
+                             {isUploading ? (
+                                <div className="flex flex-col justify-center gap-1 min-w-[70px]">
+                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div
+                                            className="bg-black h-1.5 rounded-full transition-all duration-200"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-[10px] text-center text-gray-500 font-bold">{uploadProgress}%</span>
+                                </div>
+                             ) : (
+                                <label className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold uppercase cursor-pointer transition-colors">
+                                    <Upload size={14} />
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        onChange={(e) => handleFileUpload(e, 'pdfUrl')}
+                                    />
+                                    File
+                                </label>
+                             )}
                          </div>
                          <p className="text-[10px] text-gray-400">
                              {project.pdfUrl && project.pdfUrl.startsWith('blob:') ? 'File attached (Session only)' : 'Enter URL or upload any file'}
