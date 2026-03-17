@@ -190,7 +190,7 @@ function App() {
       case 'team': 
         return <TeamPage data={teamMembers.length > 0 ? teamMembers : data.team} updateData={updateData} isEditing={isEditing} />;
       case 'archive':
-        return <ArchivePage data={archiveItems.length > 0 ? archiveItems : data.archive} onArchiveUpdate={handleArchiveUpdate} isEditing={isEditing} />;
+        return <ArchivePage data={archiveItems} onArchiveUpdate={handleArchiveUpdate} isEditing={isEditing} />;
       case 'admin':
         return <AdminPage teamData={data.team} />;
       case 'success':
