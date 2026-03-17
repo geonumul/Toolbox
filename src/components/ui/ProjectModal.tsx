@@ -162,7 +162,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white w-full h-full md:max-w-[95vw] md:h-[90vh] md:rounded-xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden" 
+        className="bg-white w-full h-full md:max-w-[80vw] md:h-[80vh] md:rounded-xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden" 
         onClick={(e) => e.stopPropagation()}
       >
         <button 
@@ -173,7 +173,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
         </button>
 
         {/* Left Side: Image Viewer */}
-        <div className="w-full h-[50%] md:w-[65%] lg:w-[70%] md:h-full bg-neutral-100 relative overflow-hidden flex flex-col">
+        <div className="w-full h-[50%] md:w-[55%] md:h-full bg-neutral-100 relative overflow-hidden flex flex-col">
 
             {/* Image */}
             <div className="flex-1 overflow-hidden flex items-center justify-center bg-neutral-100">
@@ -182,7 +182,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                         ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
                         : currentImage}
                     alt={project.title}
-                    className="w-full h-full object-contain select-none"
+                    className="w-full h-full object-cover select-none"
                     draggable={false}
                 />
             </div>
