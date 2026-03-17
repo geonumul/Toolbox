@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ExternalLink, Calendar, MapPin, FileText, Download, ArrowRight, Maximize2, Minimize2, ZoomIn, ZoomOut, Image as ImageIcon, Upload, Link as LinkIcon, RefreshCw, Save, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { X, ExternalLink, Calendar, MapPin, FileText, Download, ArrowRight, Image as ImageIcon, Upload, Link as LinkIcon, Save, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { uploadFileToCloudinary } from '../../utils/uploadService';
 import { EditableField } from './EditableField';
 
@@ -15,7 +15,6 @@ interface ProjectModalProps {
 }
 
 export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [], onUpdate, onSave, onAutoSave }: ProjectModalProps) => {
-  const [scale, setScale] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -28,12 +27,6 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
 
   useEffect(() => { setCurrentImageIndex(0); }, [project.id]);
 
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  
-  const imageContainerRef = useRef<HTMLDivElement>(null);
-
   // ESC key handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,23 +37,6 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
-
-  // Wheel Zoom Listener (Non-passive for prevention)
-  useEffect(() => {
-      const container = imageContainerRef.current;
-      if (!container) return;
-
-      const onWheel = (e: WheelEvent) => {
-          if (e.ctrlKey || e.metaKey) {
-              e.preventDefault();
-              const delta = e.deltaY * -0.002;
-              setScale(prev => Math.min(Math.max(1, prev + delta), 5));
-          }
-      };
-
-      container.addEventListener('wheel', onWheel, { passive: false });
-      return () => container.removeEventListener('wheel', onWheel);
-  }, []);
 
   const handleUpdate = (field: string, value: any) => {
     if (onUpdate) {
@@ -152,30 +128,6 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
     setCurrentImageIndex(Math.min(currentImageIndex, Math.max(0, newImages.length - 1)));
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-      e.preventDefault();
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-      if (!isDragging) return;
-      e.preventDefault();
-      setPosition({
-          x: e.clientX - dragStart.x,
-          y: e.clientY - dragStart.y
-      });
-  };
-
-  const handleMouseUp = () => {
-      setIsDragging(false);
-  };
-
-  const resetView = () => {
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
-  };
-
     // Body Scroll Lock logic
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -221,84 +173,43 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
         </button>
 
         {/* Left Side: Image Viewer */}
-        <div className="w-full h-[50%] md:w-[65%] lg:w-[70%] md:h-full bg-neutral-100 relative overflow-hidden group flex flex-col">
-            
-            {/* Toolbar */}
-            <div className="absolute top-4 left-4 right-16 z-10 flex gap-2 md:right-4 md:left-auto">
-                <button 
-                    onClick={resetView}
-                    className="p-2 bg-white/80 backdrop-blur hover:bg-white text-black rounded-lg shadow-sm transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
-                    title="Reset View"
-                >
-                    <RefreshCw size={14} /> Reset
-                </button>
-            </div>
-             <div className="absolute bottom-4 left-4 right-4 z-10 pointer-events-none text-center md:text-left md:top-4 md:left-4 md:right-auto md:bottom-auto">
-                 <span className="bg-black/50 text-white px-3 py-1 rounded-full text-[10px] font-medium backdrop-blur-sm">
-                    {window.innerWidth < 768 ? 'Pinch to Zoom • Drag to Pan' : 'Use Ctrl+Scroll to Zoom • Drag to Pan'}
-                 </span>
-             </div>
+        <div className="w-full h-[50%] md:w-[65%] lg:w-[70%] md:h-full bg-black relative overflow-hidden flex flex-col">
 
-            {/* Image Container */}
-            <div
-                ref={imageContainerRef}
-                className={`flex-1 overflow-hidden flex items-center justify-center bg-[#f5f5f5] cursor-grab ${isDragging ? 'cursor-grabbing' : ''}`}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-            >
-                <div
-                    style={{
-                        transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                        transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-                        transformOrigin: 'center center'
-                    }}
-                    className="relative"
-                >
-                    {currentImage && /\.pdf(\?|$)/i.test(currentImage) ? (
-                        <img
-                            src={currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')}
-                            alt={project.title}
-                            className="max-w-none shadow-xl pointer-events-none select-none"
-                            style={{ maxWidth: '100%', maxHeight: '80vh' }}
-                            draggable={false}
-                        />
-                    ) : (
-                        <img
-                            src={currentImage}
-                            alt={project.title}
-                            className="max-w-none shadow-xl pointer-events-none select-none"
-                            style={{ maxWidth: '100%', maxHeight: '80vh' }}
-                            draggable={false}
-                        />
-                    )}
-                </div>
+            {/* Image */}
+            <div className="flex-1 overflow-hidden">
+                <img
+                    src={currentImage && /\.pdf(\?|$)/i.test(currentImage)
+                        ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
+                        : currentImage}
+                    alt={project.title}
+                    className="w-full h-full object-cover select-none"
+                    draggable={false}
+                />
             </div>
 
             {/* Carousel Navigation */}
             {imageList.length > 1 && (
                 <>
                     <button
-                        onClick={(e) => { e.stopPropagation(); resetView(); setCurrentImageIndex(i => Math.max(0, i - 1)); }}
+                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => Math.max(0, i - 1)); }}
                         disabled={currentImageIndex === 0}
                         className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/80 backdrop-blur rounded-full shadow hover:bg-white transition-all disabled:opacity-30"
                     >
                         <ChevronLeft size={18} />
                     </button>
                     <button
-                        onClick={(e) => { e.stopPropagation(); resetView(); setCurrentImageIndex(i => Math.min(imageList.length - 1, i + 1)); }}
+                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => Math.min(imageList.length - 1, i + 1)); }}
                         disabled={currentImageIndex === imageList.length - 1}
                         className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-white/80 backdrop-blur rounded-full shadow hover:bg-white transition-all disabled:opacity-30"
                     >
                         <ChevronRight size={18} />
                     </button>
-                    <div className={`absolute left-0 right-0 flex justify-center gap-1.5 z-10 ${isEditing ? 'bottom-[88px]' : 'bottom-12'}`}>
+                    <div className={`absolute left-0 right-0 flex justify-center gap-1.5 z-10 ${isEditing ? 'bottom-[76px]' : 'bottom-4'}`}>
                         {imageList.map((_, i) => (
                             <button
                                 key={i}
-                                onClick={(e) => { e.stopPropagation(); resetView(); setCurrentImageIndex(i); }}
-                                className={`w-2 h-2 rounded-full transition-all ${i === currentImageIndex ? 'bg-black scale-110' : 'bg-black/30 hover:bg-black/60'}`}
+                                onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i); }}
+                                className={`w-2 h-2 rounded-full transition-all ${i === currentImageIndex ? 'bg-white scale-110' : 'bg-white/40 hover:bg-white/70'}`}
                             />
                         ))}
                     </div>
@@ -316,7 +227,7 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                             {imageList.map((img, i) => (
                                 <div
                                     key={i}
-                                    onClick={() => { resetView(); setCurrentImageIndex(i); }}
+                                    onClick={() => setCurrentImageIndex(i)}
                                     className={`relative flex-shrink-0 w-12 h-12 rounded overflow-hidden border-2 cursor-pointer transition-all ${i === currentImageIndex ? 'border-black' : 'border-transparent'}`}
                                 >
                                     <img src={img} className="w-full h-full object-cover" alt="" />
