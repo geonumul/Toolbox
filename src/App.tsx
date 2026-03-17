@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { IntroLoader } from './components/IntroLoader';
 import { Hero } from './components/Hero';
@@ -208,6 +209,7 @@ function App() {
 
   return (
     <>
+      <Analytics />
       <div className="min-h-screen font-sans bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
         <AnimatePresence mode="wait">
           {loading && <IntroLoader onComplete={() => setLoading(false)} />}
