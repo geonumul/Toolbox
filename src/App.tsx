@@ -11,7 +11,7 @@ import { InboxModal } from './components/ui/InboxModal';
 
 // Firebase
 import { db } from './firebase';
-import { collection, getDocs, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
 // Pages
 import { GalleryPage } from './components/pages/GalleryPage';
@@ -38,6 +38,7 @@ function App() {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [studyLogs, setStudyLogs] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [archiveItems, setArchiveItems] = useState<any[]>([]);
 
   // Fetch Projects from Firestore
   useEffect(() => {
@@ -103,6 +104,25 @@ function App() {
     });
     return () => unsubscribe();
   }, []);
+
+  // Fetch Archive from Firestore
+  useEffect(() => {
+    const q = query(collection(db, "archive"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setArchiveItems(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (error) => console.error("Error fetching archive:", error));
+    return () => unsubscribe();
+  }, []);
+
+  const handleArchiveUpdate = async (action: string, payload: any) => {
+    if (action === 'add') {
+      await addDoc(collection(db, "archive"), { ...payload, createdAt: new Date() });
+    } else if (action === 'update') {
+      await updateDoc(doc(db, "archive", payload.id), payload.fields);
+    } else if (action === 'delete') {
+      await deleteDoc(doc(db, "archive", payload.id));
+    }
+  };
 
   // Styling override
   useEffect(() => {
@@ -170,7 +190,7 @@ function App() {
       case 'team': 
         return <TeamPage data={teamMembers.length > 0 ? teamMembers : data.team} updateData={updateData} isEditing={isEditing} />;
       case 'archive':
-        return <ArchivePage data={data.archive} updateData={updateData} isEditing={isEditing} />;
+        return <ArchivePage data={archiveItems.length > 0 ? archiveItems : data.archive} onArchiveUpdate={handleArchiveUpdate} isEditing={isEditing} />;
       case 'admin':
         return <AdminPage teamData={data.team} />;
       case 'success':

@@ -5,11 +5,11 @@ import { EditableField } from '../ui/EditableField';
 
 interface ArchivePageProps {
     data: any[];
-    updateData?: (section: string, newData: any) => void;
+    onArchiveUpdate?: (action: string, payload: any) => void;
     isEditing?: boolean;
 }
 
-export const ArchivePage = ({ data, updateData, isEditing = false }: ArchivePageProps) => {
+export const ArchivePage = ({ data, onArchiveUpdate, isEditing = false }: ArchivePageProps) => {
   const ITEMS_PER_LOAD = 5;
   const [awardsCount, setAwardsCount] = useState(ITEMS_PER_LOAD);
   const [pubsCount, setPubsCount] = useState(ITEMS_PER_LOAD);
@@ -27,32 +27,28 @@ export const ArchivePage = ({ data, updateData, isEditing = false }: ArchivePage
   const handleLoadMorePubs = () => setPubsCount(prev => Math.min(prev + ITEMS_PER_LOAD, publications.length));
   const handleShowLessPubs = () => setPubsCount(ITEMS_PER_LOAD);
 
-  const handleUpdateItem = (id: number, field: string, value: string) => {
-      if (!updateData) return;
-      const updated = data.map(item => item.id === id ? { ...item, [field]: value } : item);
-      updateData('archive', updated);
+  const handleUpdateItem = (id: string, field: string, value: string) => {
+      if (!onArchiveUpdate) return;
+      onArchiveUpdate('update', { id, fields: { [field]: value } });
   };
 
-  const handleDeleteItem = (id: number) => {
-      if (!updateData) return;
+  const handleDeleteItem = (id: string) => {
+      if (!onArchiveUpdate) return;
       if (window.confirm("Delete this item?")) {
-          updateData('archive', data.filter(item => item.id !== id));
+          onArchiveUpdate('delete', { id });
       }
   };
 
   const handleAddItem = (type: 'Award' | 'Publication') => {
-      if (!updateData) return;
-      const newId = Math.max(0, ...data.map(d => d.id)) + 1;
+      if (!onArchiveUpdate) return;
       const newItem = {
-          id: newId,
-          type: type,
+          type,
           year: new Date().getFullYear().toString(),
           title: "New Item Title",
           issuer: type === 'Award' ? "Issuer Name" : undefined,
           author: type === 'Publication' ? "Author Name" : undefined,
       };
-      // Add to beginning
-      updateData('archive', [newItem, ...data]);
+      onArchiveUpdate('add', newItem);
   };
 
   return (
