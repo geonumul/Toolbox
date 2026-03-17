@@ -189,6 +189,8 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
     const [formData, setFormData] = useState(member);
     const [isUploading, setIsUploading] = useState(false);
 
+    const isLocked = ['park', 'yoo'].some(n => member.name?.toLowerCase().includes(n));
+
     // Reset form data when member changes
     useEffect(() => {
         setFormData(member);
@@ -371,8 +373,8 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
                                 <button onClick={handleSave} className="text-xs font-bold text-black border border-black px-3 py-1 hover:bg-black hover:text-white transition-colors">SAVE</button>
                             </div>
                         ) : (
-                            isAdmin && (
-                                <button 
+                            isAdmin && !isLocked && (
+                                <button
                                     onClick={() => setIsLocalEditing(true)}
                                     className="border border-gray-200 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 hover:border-black hover:bg-black hover:text-white transition-all rounded-sm"
                                 >
