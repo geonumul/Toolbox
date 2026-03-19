@@ -243,7 +243,6 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
                         const d = new Date(event.date);
                         const dayNum = d.getDate();
                         const weekDay = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(d);
-                        const isComingUp = nextUpEvent && event.id === nextUpEvent.id;
                         const isHighlighted = highlightedEventId === event.id;
 
                         return (
@@ -298,11 +297,6 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
                                                 className="underline decoration-1 underline-offset-4 decoration-border group-hover:decoration-primary"
                                             />
                                         </h3>
-                                        {isComingUp && (
-                                            <span className="bg-primary text-primary-foreground text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider flex-shrink-0">
-                                                Coming Up
-                                            </span>
-                                        )}
                                     </div>
                                     
                                     <div className="text-sm text-muted-foreground font-light mb-4 max-w-lg leading-relaxed">
