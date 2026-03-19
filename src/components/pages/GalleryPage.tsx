@@ -347,6 +347,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
         <AnimatePresence>
             {selectedProject && (
                 <ProjectModal
+                    key={selectedProject.id}
                     project={selectedProject}
                     onClose={() => { setEditBuffer({}); setSelectedProjectId(null); }}
                     isEditing={isEditing}
