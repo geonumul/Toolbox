@@ -42,12 +42,7 @@ export const SchedulePage = ({ data, updateData, isEditing = false }: SchedulePa
       .filter(e => new Date(e.date) >= todayMidnight)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] || null;
 
-  const displayEvents = [
-      ...(nextUpEvent ? [nextUpEvent] : []),
-      ...[...data]
-          .filter(e => e.id !== nextUpEvent?.id)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  ];
+  const displayEvents = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const sortedEvents = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
