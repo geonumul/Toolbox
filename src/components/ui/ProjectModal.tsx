@@ -237,27 +237,34 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
                 />
             </div>
 
-            {/* Carousel Arrows — inside image panel, z-30 to be above everything */}
-            {imageList.length > 1 && currentImageIndex > 0 && (
-                <button
-                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => i - 1); }}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white/90 rounded-full shadow-lg flex items-center justify-center hover:bg-white hover:scale-110 transition-all"
-                >
-                    <ChevronLeft size={20} strokeWidth={2.5} />
-                </button>
-            )}
-            {imageList.length > 1 && currentImageIndex < imageList.length - 1 && (
-                <button
-                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => i + 1); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white/90 rounded-full shadow-lg flex items-center justify-center hover:bg-white hover:scale-110 transition-all"
-                >
-                    <ChevronRight size={20} strokeWidth={2.5} />
-                </button>
+            {/* Carousel Arrows */}
+            {imageList.length > 1 && (
+                <div className="absolute inset-0 flex items-center justify-between px-3 pointer-events-none z-30">
+                    {currentImageIndex > 0 ? (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => i - 1); }}
+                            className="pointer-events-auto w-10 h-10 bg-white/90 rounded-full shadow-lg flex items-center justify-center hover:bg-white hover:scale-110 transition-all"
+                        >
+                            <ChevronLeft size={20} strokeWidth={2.5} />
+                        </button>
+                    ) : <div className="w-10" />}
+                    {currentImageIndex < imageList.length - 1 ? (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => i + 1); }}
+                            className="pointer-events-auto w-10 h-10 bg-white/90 rounded-full shadow-lg flex items-center justify-center hover:bg-white hover:scale-110 transition-all"
+                        >
+                            <ChevronRight size={20} strokeWidth={2.5} />
+                        </button>
+                    ) : <div className="w-10" />}
+                </div>
             )}
 
             {/* Dots */}
             {imageList.length > 1 && (
-                <div className={`absolute left-0 right-0 flex justify-center items-center z-30 ${isEditing ? 'bottom-[80px]' : 'bottom-4'}`}>
+                <div
+                    className="absolute flex justify-center items-center z-30"
+                    style={{ left: 0, right: 0, bottom: isEditing ? '80px' : '16px' }}
+                >
                     <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-2 rounded-full">
                         {imageList.map((_, i) => (
                             <button
