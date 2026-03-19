@@ -241,29 +241,31 @@ export const ProjectModal = ({ project, onClose, isEditing = false, teamData = [
             {imageList.length > 1 && (
                 <>
                     {/* Left Arrow */}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => Math.max(0, i - 1)); }}
-                        disabled={currentImageIndex === 0}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all disabled:opacity-20 disabled:scale-100"
-                    >
-                        <ChevronLeft size={20} strokeWidth={2.5} />
-                    </button>
+                    {currentImageIndex > 0 && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => i - 1); }}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 rounded-full shadow-lg flex items-center justify-center hover:bg-white hover:scale-110 transition-all"
+                        >
+                            <ChevronLeft size={20} strokeWidth={2.5} />
+                        </button>
+                    )}
                     {/* Right Arrow */}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => Math.min(imageList.length - 1, i + 1)); }}
-                        disabled={currentImageIndex === imageList.length - 1}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-all disabled:opacity-20 disabled:scale-100"
-                    >
-                        <ChevronRight size={20} strokeWidth={2.5} />
-                    </button>
+                    {currentImageIndex < imageList.length - 1 && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => i + 1); }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 rounded-full shadow-lg flex items-center justify-center hover:bg-white hover:scale-110 transition-all"
+                        >
+                            <ChevronRight size={20} strokeWidth={2.5} />
+                        </button>
+                    )}
                     {/* Dots */}
-                    <div className={`absolute left-0 right-0 flex justify-center items-center gap-1.5 z-10 ${isEditing ? 'bottom-[76px]' : 'bottom-4'}`}>
-                        <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur px-3 py-1.5 rounded-full shadow">
+                    <div className={`absolute left-0 right-0 flex justify-center items-center z-20 ${isEditing ? 'bottom-[80px]' : 'bottom-4'}`}>
+                        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-2 rounded-full">
                             {imageList.map((_, i) => (
                                 <button
                                     key={i}
                                     onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i); }}
-                                    className={`rounded-full transition-all duration-200 ${i === currentImageIndex ? 'w-2.5 h-2.5 bg-black' : 'w-2 h-2 bg-black/25 hover:bg-black/50'}`}
+                                    className={`rounded-full transition-all duration-200 ${i === currentImageIndex ? 'w-3 h-3 bg-white' : 'w-2 h-2 bg-white/40 hover:bg-white/70'}`}
                                 />
                             ))}
                         </div>
