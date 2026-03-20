@@ -16,6 +16,7 @@ import { collection, getDocs, query, orderBy, onSnapshot, addDoc, updateDoc, del
 
 // Pages
 import { GalleryPage } from './components/pages/GalleryPage';
+import { SecretPage } from './components/pages/SecretPage';
 import { SchedulePage } from './components/pages/SchedulePage';
 import { StudyPage } from './components/pages/StudyPage';
 import { TeamPage } from './components/pages/TeamPage';
@@ -192,6 +193,8 @@ function App() {
         return <TeamPage data={teamMembers.length > 0 ? teamMembers : data.team} updateData={updateData} isEditing={isEditing} />;
       case 'archive':
         return <ArchivePage data={archiveItems} onArchiveUpdate={handleArchiveUpdate} isEditing={isEditing} />;
+      case 'secret':
+        return <SecretPage onExit={() => setPage('home')} />;
       case 'admin':
         return <AdminPage teamData={data.team} />;
       case 'success':

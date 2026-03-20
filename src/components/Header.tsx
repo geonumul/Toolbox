@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, Settings, Check, Edit2, LogOut, Mail } from 'lucide-react';
 import { LiveStudioModal } from './ui/LiveStudioModal';
@@ -32,6 +32,22 @@ export const Header = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const logoClickCount = useRef(0);
+  const logoClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogoClick = () => {
+    logoClickCount.current += 1;
+    if (logoClickTimer.current) clearTimeout(logoClickTimer.current);
+    if (logoClickCount.current >= 5) {
+      logoClickCount.current = 0;
+      setPage('secret');
+      return;
+    }
+    logoClickTimer.current = setTimeout(() => {
+      logoClickCount.current = 0;
+      setPage('home');
+    }, 800);
+  };
   
   const menuItems = [
     { label: 'HOME', id: 'home' },
@@ -82,7 +98,7 @@ export const Header = ({
         {/* Left: Logo */}
         <div className="pointer-events-auto">
             <button
-                onClick={() => setPage('home')}
+                onClick={handleLogoClick}
                 className="font-black text-2xl tracking-tighter hover:opacity-70 transition-opacity"
             >
                 TOOLBOX
