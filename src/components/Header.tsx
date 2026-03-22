@@ -36,8 +36,8 @@ export const Header = ({
   const logoClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleLogoClick = () => {
-    if (logoClickTimer.current) clearTimeout(logoClickTimer.current);
     logoClickCount.current += 1;
+    if (logoClickTimer.current) clearTimeout(logoClickTimer.current);
     if (logoClickCount.current >= 5) {
       logoClickCount.current = 0;
       setPage('secret');
@@ -45,8 +45,7 @@ export const Header = ({
     }
     logoClickTimer.current = setTimeout(() => {
       logoClickCount.current = 0;
-      if (currentPage !== 'secret') setPage('home');
-    }, 800);
+    }, 2000);
   };
   
   const menuItems = [
