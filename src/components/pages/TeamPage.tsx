@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Mail, Plus, Trash2, Edit3, Check, Instagram, Linkedin, Github, Link as LinkIcon, Upload } from "lucide-react";
+import { X, Mail, Plus, Trash2, Edit3, Instagram, Linkedin, Github, Upload } from "lucide-react";
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 
@@ -257,36 +257,6 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
     const [formData, setFormData] = useState(member);
     const [isUploading, setIsUploading] = useState(false);
 
-    // Image position drag
-    const profileImgRef = useRef<HTMLDivElement>(null);
-    const profileDragRef = useRef({ isDragging: false, startX: 0, startY: 0, startPosX: 50, startPosY: 50 });
-    const [imgPos, setImgPos] = useState<{x:number,y:number}>(member.imagePosition || { x: 50, y: 50 });
-    const imgPosRef = useRef(imgPos);
-    useEffect(() => { imgPosRef.current = imgPos; }, [imgPos]);
-    useEffect(() => { setImgPos(member.imagePosition || { x: 50, y: 50 }); }, [member.id]);
-
-    const handleProfileImgMouseDown = (e: React.MouseEvent) => {
-        if (!isLocalEditing) return;
-        e.preventDefault();
-        profileDragRef.current = { isDragging: true, startX: e.clientX, startY: e.clientY, startPosX: imgPosRef.current.x, startPosY: imgPosRef.current.y };
-    };
-    const handleProfileImgMouseMove = (e: React.MouseEvent) => {
-        if (!profileDragRef.current.isDragging || !profileImgRef.current) return;
-        const { offsetWidth: w, offsetHeight: h } = profileImgRef.current;
-        const newX = Math.min(100, Math.max(0, profileDragRef.current.startPosX - (e.clientX - profileDragRef.current.startX) / w * 100));
-        const newY = Math.min(100, Math.max(0, profileDragRef.current.startPosY - (e.clientY - profileDragRef.current.startY) / h * 100));
-        setImgPos({ x: newX, y: newY });
-    };
-    const handleProfileImgMouseUp = (e: React.MouseEvent) => {
-        if (!profileDragRef.current.isDragging || !profileImgRef.current) return;
-        profileDragRef.current.isDragging = false;
-        const { offsetWidth: w, offsetHeight: h } = profileImgRef.current;
-        const newX = Math.min(100, Math.max(0, profileDragRef.current.startPosX - (e.clientX - profileDragRef.current.startX) / w * 100));
-        const newY = Math.min(100, Math.max(0, profileDragRef.current.startPosY - (e.clientY - profileDragRef.current.startY) / h * 100));
-        const pos = { x: newX, y: newY };
-        setImgPos(pos);
-        handleChange('imagePosition', pos);
-    };
 
     // Reset form data when member changes
     useEffect(() => {
@@ -372,23 +342,12 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
 
                 {/* Left Column: Image (Square/Portrait) */}
                 <div
-                    ref={profileImgRef}
-                    className={`w-full h-[40%] md:w-[40%] md:h-full relative bg-gray-900 group ${isLocalEditing ? (profileDragRef.current.isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
-                    onMouseDown={handleProfileImgMouseDown}
-                    onMouseMove={handleProfileImgMouseMove}
-                    onMouseUp={handleProfileImgMouseUp}
-                    onMouseLeave={handleProfileImgMouseUp}
+                    className="w-full h-[40%] md:w-[40%] md:h-full relative bg-gray-900 group"
                 >
-                    {isLocalEditing && (
-                        <div className="absolute top-3 left-3 z-30 bg-black/50 text-white text-[10px] px-2 py-1 rounded pointer-events-none">
-                            드래그로 위치 조정
-                        </div>
-                    )}
                     <img
                         src={formData.image}
                         alt={formData.name}
                         className="w-full h-full object-cover opacity-80 pointer-events-none"
-                        style={{ objectPosition: `${imgPos.x}% ${imgPos.y}%` }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
                     
