@@ -214,59 +214,60 @@ function App() {
   return (
     <>
       <Analytics />
-      <div className="min-h-screen font-sans bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
-        <AnimatePresence mode="wait">
-          {loading && <IntroLoader onComplete={() => setLoading(false)} />}
-        </AnimatePresence>
 
-        {!loading && (
-          <>
-              <Header
-                  currentPage={page}
-                  setPage={setPage}
-                  onOpenSecret={() => setIsSecretOpen(true)}
-                  liveLink={data.config?.liveStudioLink || '#'}
-                  googleMeetLink={data.config?.googleMeetLink}
-                  slackLink={data.config?.slackLink}
-                  toggleEditMode={() => setIsEditing(!isEditing)}
-                  isEditing={isEditing}
-                  updateConfig={updateConfig}
-                  onOpenInbox={() => setIsInboxOpen(true)}
-                  inboxCount={(data.inbox || []).length}
-              />
-              
-              <AnimatePresence mode="wait">
-                  <motion.div
-                      key={page}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                  >
-                      {renderPage()}
-                  </motion.div>
-              </AnimatePresence>
-              
-              <Footer 
-                isEditing={isEditing} 
-                onUpdateConfig={handleUpdateConfig}
-                config={data.config}
-                onApply={handleApply}
-              />
+      {/* IntroLoader */}
+      <AnimatePresence mode="wait">
+        {loading && <IntroLoader onComplete={() => setLoading(false)} />}
+      </AnimatePresence>
 
-              <InboxModal 
-                  isOpen={isInboxOpen}
-                  onClose={() => setIsInboxOpen(false)}
-                  applications={data.inbox || []}
-                  onDelete={handleDeleteApplication}
-              />
-          </>
-        )}
-      </div>
-
-      {/* SecretPage rendered outside all wrappers to avoid transform/stacking issues */}
-      {isSecretOpen && (
+      {/* Secret Page — renders alone, no other content */}
+      {!loading && isSecretOpen && (
         <SecretPage onExit={() => setIsSecretOpen(false)} />
+      )}
+
+      {/* Normal App — hidden when SecretPage is open */}
+      {!loading && !isSecretOpen && (
+        <div className="min-h-screen font-sans bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
+          <Header
+              currentPage={page}
+              setPage={setPage}
+              onOpenSecret={() => setIsSecretOpen(true)}
+              liveLink={data.config?.liveStudioLink || '#'}
+              googleMeetLink={data.config?.googleMeetLink}
+              slackLink={data.config?.slackLink}
+              toggleEditMode={() => setIsEditing(!isEditing)}
+              isEditing={isEditing}
+              updateConfig={updateConfig}
+              onOpenInbox={() => setIsInboxOpen(true)}
+              inboxCount={(data.inbox || []).length}
+          />
+
+          <AnimatePresence mode="wait">
+              <motion.div
+                  key={page}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+              >
+                  {renderPage()}
+              </motion.div>
+          </AnimatePresence>
+
+          <Footer
+            isEditing={isEditing}
+            onUpdateConfig={handleUpdateConfig}
+            config={data.config}
+            onApply={handleApply}
+          />
+
+          <InboxModal
+              isOpen={isInboxOpen}
+              onClose={() => setIsInboxOpen(false)}
+              applications={data.inbox || []}
+              onDelete={handleDeleteApplication}
+          />
+        </div>
       )}
     </>
   );
