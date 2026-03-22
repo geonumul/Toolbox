@@ -424,7 +424,7 @@ const MemberDetailModal = ({ member, onClose, isAdmin, onSave }: { member: any, 
 
                     {/* Edit Mode Overlay */}
                     {isLocalEditing && (
-                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4 z-20">
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4 z-20" onMouseDown={(e) => e.stopPropagation()}>
                             <div className="bg-white p-1 rounded shadow-lg flex items-center gap-2">
                                     <input 
                                     type="text" 

@@ -19,14 +19,14 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
   const landmarksRef = useRef<any[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "tracking" | "error">("loading");
   const [showExit, setShowExit] = useState(false);
-  const [tick, setTick] = useState(0);
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     const t = setTimeout(() => setShowExit(true), 3000);
     return () => clearTimeout(t);
   }, []);
 
-  // Clock tick for live readouts
+  // Clock tick for live readouts (triggers re-render every second to update timeStr)
   useEffect(() => {
     const id = setInterval(() => setTick(n => n + 1), 1000);
     return () => clearInterval(id);
@@ -325,8 +325,8 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         <div style={{ position:"absolute", top:"60%", left:"5%", width:200, height:200, borderRadius:"50%", background:"radial-gradient(circle, rgba(200,160,255,0.2), transparent 70%)", filter:"blur(40px)", opacity:0.4 }} />
       </div>
 
-      {/* ── TOP-LEFT: Exit button + system panel ── */}
-      <div className="absolute" style={{ top: 24, left: 28, display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* ── LEFT COLUMN: exit + sys info + visualizer + config ── */}
+      <div className="absolute" style={{ top: 24, left: 28, display: "flex", flexDirection: "column", gap: 8, width: 148 }}>
         {/* Exit button */}
         <button
           onClick={onExit}
@@ -336,9 +336,9 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
             border: "1px solid rgba(255,255,255,0.22)",
             backdropFilter: "blur(12px)",
             borderRadius: 6,
-            padding: "8px 16px",
+            padding: "8px 14px",
             color: "rgba(255,255,255,0.85)",
-            fontSize: 10, fontFamily: "monospace", letterSpacing: "0.3em",
+            fontSize: 10, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", letterSpacing: "0.3em",
             textTransform: "uppercase",
             cursor: "pointer",
             transition: "all 0.3s",
@@ -352,42 +352,31 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         </button>
 
         {/* System info panel */}
-        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "12px 14px", minWidth: 160 }}>
-          <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.3em", marginBottom: 8, textTransform: "uppercase" }}>SYS ◆ LIVE</div>
-          <div style={{ fontSize: 13, fontFamily: "monospace", color: "rgba(255,255,255,0.8)", letterSpacing: "0.06em", lineHeight: 1.3 }}>{timeStr}</div>
-          <div style={{ fontSize: 9, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", marginTop: 2, letterSpacing: "0.1em" }}>{dateStr}</div>
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "12px 14px" }}>
+          <div style={{ fontSize: 8, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.35)", letterSpacing: "0.3em", marginBottom: 8, textTransform: "uppercase" }}>SYS ◆ LIVE</div>
+          <div style={{ fontSize: 13, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.8)", letterSpacing: "0.06em", lineHeight: 1.3 }}>{timeStr}</div>
+          <div style={{ fontSize: 9, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.35)", marginTop: 2, letterSpacing: "0.1em" }}>{dateStr}</div>
           <div style={{ marginTop: 10, height: 1, background: "rgba(255,255,255,0.1)" }} />
           <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em" }}>
               <span>HANDS</span>
               <span style={{ color: landmarksRef.current.length > 0 ? "rgba(100,255,160,0.85)" : "rgba(255,255,255,0.35)" }}>{landmarksRef.current.length} / 2</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em" }}>
               <span>MODE</span>
               <span style={{ color: status === "tracking" ? "rgba(100,255,160,0.85)" : "rgba(255,200,80,0.7)" }}>{status.toUpperCase()}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── TOP-RIGHT: Title + info ── */}
-      <div className="absolute" style={{ top: 24, right: 28, textAlign: "right" }}>
-        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "14px 18px", display: "inline-block" }}>
-          <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>TOOLBOX /// SECRET</div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: "rgba(255,255,255,0.75)", letterSpacing: "-0.04em" }}>GLASSMORPHISM</div>
-          <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.25)", letterSpacing: "0.15em", marginTop: 4 }}>HAND-TRACKING CANVAS</div>
-        </div>
-      </div>
-
-      {/* ── LEFT SIDE: Decorative panel ── */}
-      <div className="absolute pointer-events-none" style={{ top: "50%", left: 28, transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 8, width: 140 }}>
-        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "14px 12px" }}>
-          <div style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.3)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>VISUALIZER</div>
+        {/* Visualizer */}
+        <div className="pointer-events-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "12px 12px" }}>
+          <div style={{ fontSize: 7, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.3)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>VISUALIZER</div>
           {[0.9, 0.6, 0.8, 0.45, 0.7].map((v, i) => (
             <div key={i} style={{ marginBottom: 6 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                <span style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em" }}>CH {String(i+1).padStart(2,"0")}</span>
-                <span style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.35)" }}>{Math.round(v * 100)}%</span>
+                <span style={{ fontSize: 7, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em" }}>CH {String(i+1).padStart(2,"0")}</span>
+                <span style={{ fontSize: 7, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.35)" }}>{Math.round(v * 100)}%</span>
               </div>
               <div style={{ height: 2, background: "rgba(255,255,255,0.08)", borderRadius: 1 }}>
                 <div style={{ height: "100%", width: `${v * 100}%`, background: `rgba(255,255,255,${0.2 + v * 0.4})`, borderRadius: 1 }} />
@@ -396,35 +385,39 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
           ))}
         </div>
 
-        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "12px 12px" }}>
-          <div style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.25)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>CONFIG</div>
+        {/* Config */}
+        <div className="pointer-events-none" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "12px 12px" }}>
+          <div style={{ fontSize: 7, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.25)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>CONFIG</div>
           {["MODEL: FULL", "CONF: 0.75", "TRACK: 0.50", "HANDS: 2"].map((line, i) => (
-            <div key={i} style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", lineHeight: 1.8 }}>{line}</div>
+            <div key={i} style={{ fontSize: 8, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", lineHeight: 1.8 }}>{line}</div>
           ))}
         </div>
       </div>
 
-      {/* ── RIGHT SIDE: Decorative panel ── */}
-      <div className="absolute pointer-events-none" style={{ top: "50%", right: 28, transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 8, width: 150 }}>
-        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "14px 12px" }}>
-          <div style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.3)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>GESTURES</div>
-          {[
-            { label: "INDEX L", active: false },
-            { label: "INDEX R", active: false },
-            { label: "PINCH L", active: false },
-            { label: "PINCH R", active: false },
-            { label: "GLASS", active: false },
-          ].map((g, i) => (
+      {/* ── RIGHT COLUMN: title + gestures + how-to ── */}
+      <div className="absolute" style={{ top: 24, right: 28, display: "flex", flexDirection: "column", gap: 8, width: 160 }}>
+        {/* Title panel */}
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "12px 14px" }}>
+          <div style={{ fontSize: 7, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.35)", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>TOOLBOX /// SECRET</div>
+          <div style={{ fontSize: 16, fontWeight: 900, color: "rgba(255,255,255,0.75)", fontFamily: "'Pretendard Variable', Pretendard, sans-serif", letterSpacing: "-0.04em" }}>GLASSMORPHISM</div>
+          <div style={{ fontSize: 7, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.25)", letterSpacing: "0.15em", marginTop: 3 }}>HAND-TRACKING CANVAS</div>
+        </div>
+
+        {/* Gestures panel */}
+        <div className="pointer-events-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "12px 12px" }}>
+          <div style={{ fontSize: 7, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.3)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>GESTURES</div>
+          {["INDEX L", "INDEX R", "PINCH L", "PINCH R", "GLASS"].map((label, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 7 }}>
-              <div style={{ width: 5, height: 5, borderRadius: "50%", background: g.active ? "rgba(100,255,160,0.9)" : "rgba(255,255,255,0.15)", boxShadow: g.active ? "0 0 6px rgba(100,255,160,0.5)" : "none", flexShrink: 0 }} />
-              <span style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em" }}>{g.label}</span>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
+              <span style={{ fontSize: 8, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em" }}>{label}</span>
             </div>
           ))}
         </div>
 
-        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "12px 12px" }}>
-          <div style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.25)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>HOW TO</div>
-          <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.4)", lineHeight: 1.9, letterSpacing: "0.05em" }}>
+        {/* How-to panel */}
+        <div className="pointer-events-none" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "12px 12px" }}>
+          <div style={{ fontSize: 7, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.25)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>HOW TO</div>
+          <div style={{ fontSize: 8, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", color: "rgba(255,255,255,0.4)", lineHeight: 1.9, letterSpacing: "0.05em" }}>
             1. SHOW 2 HANDS<br />
             2. INDEX FINGERS<br />
             &nbsp;&nbsp;&nbsp;DEFINE GLASS<br />
@@ -487,7 +480,7 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
       {/* ── BOTTOM: Instructions bar ── */}
       {status !== "error" && (
         <div className="absolute pointer-events-none" style={{ bottom: 24, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
-          <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "10px 24px", display: "flex", gap: 36, color: "rgba(255,255,255,0.45)", fontSize: 9, fontFamily: "monospace", letterSpacing: "0.25em", textTransform: "uppercase" }}>
+          <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "10px 24px", display: "flex", gap: 36, color: "rgba(255,255,255,0.45)", fontSize: 9, fontFamily: "'Pretendard Variable', Pretendard, sans-serif", letterSpacing: "0.25em", textTransform: "uppercase" }}>
             <span>☞ TWO INDEX FINGERS → DEFINE GLASS</span>
             <span style={{ color: "rgba(255,255,255,0.2)" }}>|</span>
             <span>☞ PINCH TO DISTORT</span>
