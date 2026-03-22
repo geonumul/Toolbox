@@ -194,8 +194,6 @@ function App() {
         return <TeamPage data={teamMembers.length > 0 ? teamMembers : data.team} updateData={updateData} isEditing={isEditing} />;
       case 'archive':
         return <ArchivePage data={archiveItems} onArchiveUpdate={handleArchiveUpdate} isEditing={isEditing} />;
-      case 'secret':
-        return <main><Hero /><Marquee /><Recruitment data={data.recruitment} updateData={updateData} isEditing={isEditing} /></main>;
       case 'admin':
         return <AdminPage teamData={data.team} />;
       case 'success':
