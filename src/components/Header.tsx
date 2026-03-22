@@ -32,20 +32,12 @@ export const Header = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const logoClickCount = useRef(0);
-  const logoClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const handleLogoClick = () => {
-    logoClickCount.current += 1;
-    if (logoClickTimer.current) clearTimeout(logoClickTimer.current);
-    if (logoClickCount.current >= 5) {
-      logoClickCount.current = 0;
-      setPage('secret');
-      return;
-    }
-    logoClickTimer.current = setTimeout(() => {
-      logoClickCount.current = 0;
-    }, 2000);
+    setPage('home');
+  };
+
+  const handleLogoDoubleClick = () => {
+    setPage('secret');
   };
   
   const menuItems = [
@@ -98,6 +90,7 @@ export const Header = ({
         <div className="pointer-events-auto">
             <button
                 onClick={handleLogoClick}
+                onDoubleClick={handleLogoDoubleClick}
                 className="font-black text-2xl tracking-tighter hover:opacity-70 transition-opacity"
             >
                 TOOLBOX
