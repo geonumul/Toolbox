@@ -32,19 +32,11 @@ export const Header = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const logoClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const handleLogoClick = () => {
-    if (logoClickTimer.current) clearTimeout(logoClickTimer.current);
-    logoClickTimer.current = setTimeout(() => {
-      setPage('home');
-    }, 300);
-  };
-
-  const handleLogoDoubleClick = () => {
-    if (logoClickTimer.current) clearTimeout(logoClickTimer.current);
     setPage('secret');
   };
+
+  const handleLogoDoubleClick = () => {};
   
   const menuItems = [
     { label: 'HOME', id: 'home' },
