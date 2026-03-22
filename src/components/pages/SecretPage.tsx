@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import ReactDOM from "react-dom";
 
 const THUMB_TIP = 4;
 const INDEX_TIP = 8;
@@ -284,7 +283,7 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
     return () => window.removeEventListener("keydown", onKey);
   }, [onExit]);
 
-  return ReactDOM.createPortal(
+  return (
     <div className="fixed inset-0 overflow-hidden z-[9999]" style={{ background: "#080808" }}>
 
       {/* Background: subtle grid */}
@@ -382,7 +381,6 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
           </div>
         </div>
       )}
-    </div>,
-    document.body
+    </div>
   );
 };

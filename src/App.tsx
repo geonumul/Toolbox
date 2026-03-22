@@ -194,7 +194,7 @@ function App() {
       case 'archive':
         return <ArchivePage data={archiveItems} onArchiveUpdate={handleArchiveUpdate} isEditing={isEditing} />;
       case 'secret':
-        return <SecretPage onExit={() => setPage('home')} />;
+        return null;
       case 'admin':
         return <AdminPage teamData={data.team} />;
       case 'success':
@@ -261,6 +261,11 @@ function App() {
           </>
         )}
       </div>
+
+      {/* SecretPage rendered outside all wrappers to avoid transform/stacking issues */}
+      {!loading && page === 'secret' && (
+        <SecretPage onExit={() => setPage('home')} />
+      )}
     </>
   );
 }
