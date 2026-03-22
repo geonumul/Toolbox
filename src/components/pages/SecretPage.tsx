@@ -18,6 +18,11 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarksRef = useRef<any[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "tracking" | "error">("loading");
+  const [showExit, setShowExit] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShowExit(true), 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   // Init MediaPipe + camera
   useEffect(() => {
@@ -357,11 +362,11 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
       {/* Canvas overlay (full screen) */}
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
 
-      {/* Back button */}
+      {/* Back button — delayed 3s so camera permission click doesn't accidentally close */}
       <button
         onClick={onExit}
-        className="absolute top-6 left-8 z-20 text-white/20 hover:text-white/70 transition-colors"
-        style={{ fontSize:9, fontFamily:"monospace", letterSpacing:"0.4em", textTransform:"uppercase" }}
+        className="absolute top-6 left-8 z-20 text-white/20 hover:text-white/70 transition-all duration-500"
+        style={{ fontSize:9, fontFamily:"monospace", letterSpacing:"0.4em", textTransform:"uppercase", opacity: showExit ? 1 : 0, pointerEvents: showExit ? 'auto' : 'none' }}
       >
         ← TOOLBOX
       </button>
