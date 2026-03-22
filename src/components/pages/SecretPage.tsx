@@ -19,9 +19,17 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
   const landmarksRef = useRef<any[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "tracking" | "error">("loading");
   const [showExit, setShowExit] = useState(false);
+  const [tick, setTick] = useState(0);
+
   useEffect(() => {
     const t = setTimeout(() => setShowExit(true), 3000);
     return () => clearTimeout(t);
+  }, []);
+
+  // Clock tick for live readouts
+  useEffect(() => {
+    const id = setInterval(() => setTick(n => n + 1), 1000);
+    return () => clearInterval(id);
   }, []);
 
   // Init MediaPipe + camera
@@ -42,6 +50,7 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         hands.onResults((r: any) => {
           landmarksRef.current = r.multiHandLandmarks || [];
           if (landmarksRef.current.length > 0) setStatus("tracking");
+          else if (status === "tracking") setStatus("ready");
         });
         await hands.initialize();
 
@@ -123,24 +132,24 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         if (w > 30 && h > 30) {
           // ── Glass fill ──
           ctx.save();
-          ctx.fillStyle = "rgba(255,255,255,0.06)";
+          ctx.fillStyle = "rgba(255,255,255,0.08)";
           ctx.fillRect(minX, minY, w, h);
           ctx.restore();
 
           // ── Glass border ──
           ctx.save();
-          ctx.strokeStyle = "rgba(255,255,255,0.35)";
+          ctx.strokeStyle = "rgba(255,255,255,0.5)";
           ctx.lineWidth = 1;
-          ctx.shadowColor = "rgba(255,255,255,0.25)";
-          ctx.shadowBlur = 10;
+          ctx.shadowColor = "rgba(255,255,255,0.4)";
+          ctx.shadowBlur = 14;
           ctx.strokeRect(minX, minY, w, h);
           ctx.restore();
 
           // ── Corner brackets ──
-          const cs = 14;
+          const cs = 16;
           ctx.save();
-          ctx.strokeStyle = "rgba(255,255,255,0.6)";
-          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = "rgba(255,255,255,0.85)";
+          ctx.lineWidth = 2;
           [[minX, minY, 1, 1], [maxX, minY, -1, 1], [minX, maxY, 1, -1], [maxX, maxY, -1, -1]].forEach(([cx, cy, sx, sy]) => {
             ctx.beginPath();
             ctx.moveTo(cx + sx * cs, cy);
@@ -150,6 +159,14 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
           });
           ctx.restore();
 
+          // ── Size readout ──
+          ctx.save();
+          ctx.fillStyle = "rgba(255,255,255,0.55)";
+          ctx.font = "8px monospace";
+          ctx.letterSpacing = "2px";
+          ctx.fillText(`${Math.round(w)} × ${Math.round(h)}`, minX + 4, maxY + 14);
+          ctx.restore();
+
           // ── Distortion lines (clipped to glass) ──
           const avgPinch = (p0 + p1) / 2;
           if (avgPinch > 0.05) {
@@ -157,20 +174,19 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
             ctx.beginPath();
             ctx.rect(minX + 1, minY + 1, w - 2, h - 2);
             ctx.clip();
-            ctx.lineWidth = 0.7;
+            ctx.lineWidth = 0.8;
 
             for (let row = minY + 5; row <= maxY - 5; row += 9) {
               ctx.beginPath();
               for (let x = minX; x <= maxX; x += 3) {
                 const relX = (x - minX) / w;
-                // Left corner driven by p0, right by p1
                 const leftW = Math.pow(1 - relX, 1.5);
                 const rightW = Math.pow(relX, 1.5);
                 const amp = p0 * leftW * 18 + p1 * rightW * 18;
                 const dy =
                   Math.sin((relX * 6 + t * 2.5) * Math.PI) * amp +
                   Math.sin((relX * 3.5 + t * 1.8 + 1) * Math.PI) * amp * 0.4;
-                const alpha = 0.05 + avgPinch * 0.18;
+                const alpha = 0.08 + avgPinch * 0.22;
                 ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
                 if (x === minX) ctx.moveTo(x, row + dy);
                 else ctx.lineTo(x, row + dy);
@@ -182,7 +198,7 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
 
           // ── Diagonal center line ──
           ctx.save();
-          ctx.strokeStyle = "rgba(255,255,255,0.08)";
+          ctx.strokeStyle = "rgba(255,255,255,0.12)";
           ctx.lineWidth = 0.5;
           ctx.setLineDash([4, 8]);
           ctx.beginPath();
@@ -198,9 +214,8 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
 
         // ── Hand nodes ──
         ([[i0, th0, p0], [i1, th1, p1]] as Array<[{x:number,y:number}, {x:number,y:number}, number]>).forEach(([tip, thumb, pn]) => {
-          // Dashed line
           ctx.save();
-          ctx.strokeStyle = `rgba(255,255,255,${0.2 + pn * 0.5})`;
+          ctx.strokeStyle = `rgba(255,255,255,${0.3 + pn * 0.55})`;
           ctx.lineWidth = 1;
           ctx.setLineDash([3, 5]);
           ctx.beginPath();
@@ -209,30 +224,27 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
           ctx.stroke();
           ctx.restore();
 
-          // Index tip glow
           ctx.save();
           ctx.fillStyle = "rgba(255,255,255,0.95)";
           ctx.shadowColor = "white";
-          ctx.shadowBlur = 12 + pn * 20;
+          ctx.shadowBlur = 16 + pn * 24;
           ctx.beginPath();
           ctx.arc(tip.x, tip.y, 5 + pn * 4, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
 
-          // Thumb dot
           ctx.save();
-          ctx.fillStyle = `rgba(255,255,255,${0.35 + pn * 0.5})`;
+          ctx.fillStyle = `rgba(255,255,255,${0.45 + pn * 0.5})`;
           ctx.shadowColor = "white";
-          ctx.shadowBlur = 6;
+          ctx.shadowBlur = 8;
           ctx.beginPath();
           ctx.arc(thumb.x, thumb.y, 3 + pn * 2, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
 
-          // Pinch ring
           if (pn > 0.08) {
             ctx.save();
-            ctx.strokeStyle = `rgba(255,255,255,${pn * 0.45})`;
+            ctx.strokeStyle = `rgba(255,255,255,${pn * 0.55})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.arc(tip.x, tip.y, 18 + pn * 8, 0, Math.PI * 2 * pn);
@@ -246,7 +258,7 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         const thumb = toC(lms[0][THUMB_TIP]);
 
         ctx.save();
-        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.strokeStyle = "rgba(255,255,255,0.35)";
         ctx.lineWidth = 1;
         ctx.setLineDash([3, 5]);
         ctx.beginPath();
@@ -256,16 +268,16 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         ctx.restore();
 
         ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
         ctx.shadowColor = "white";
-        ctx.shadowBlur = 14;
+        ctx.shadowBlur = 16;
         ctx.beginPath();
         ctx.arc(tip.x, tip.y, 6, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
         ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
         ctx.font = "9px monospace";
         ctx.textAlign = "center";
         ctx.fillText("BRING SECOND HAND", tip.x, tip.y - 18);
@@ -288,11 +300,15 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
     return () => window.removeEventListener("keydown", onKey);
   }, [onExit]);
 
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+
   return (
-    <div className="fixed inset-0 overflow-hidden z-[9999]" style={{ background: "#080808" }}>
+    <div className="fixed inset-0 overflow-hidden z-[9999]" style={{ background: "linear-gradient(135deg, #0e0e14 0%, #111118 50%, #0e0e14 100%)" }}>
 
       {/* Background: subtle grid */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.035 }}>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.06 }}>
         <defs>
           <pattern id="sg" width="48" height="48" patternUnits="userSpaceOnUse">
             <path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" strokeWidth="0.6" />
@@ -303,37 +319,143 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
 
       {/* Background: glassmorphism colour blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div style={{ position:"absolute", top:"8%", left:"4%", width:320, height:320, borderRadius:"50%", background:"radial-gradient(circle, rgba(120,120,255,0.25), transparent 70%)", filter:"blur(50px)", opacity:0.5 }} />
-        <div style={{ position:"absolute", bottom:"6%", right:"6%", width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,100,120,0.2), transparent 70%)", filter:"blur(60px)", opacity:0.4 }} />
-        <div style={{ position:"absolute", top:"45%", right:"12%", width:260, height:260, borderRadius:"50%", background:"radial-gradient(circle, rgba(80,255,180,0.2), transparent 70%)", filter:"blur(45px)", opacity:0.35 }} />
+        <div style={{ position:"absolute", top:"5%", left:"2%", width:380, height:380, borderRadius:"50%", background:"radial-gradient(circle, rgba(130,130,255,0.35), transparent 70%)", filter:"blur(55px)", opacity:0.65 }} />
+        <div style={{ position:"absolute", bottom:"4%", right:"4%", width:440, height:440, borderRadius:"50%", background:"radial-gradient(circle, rgba(255,100,140,0.28), transparent 70%)", filter:"blur(65px)", opacity:0.55 }} />
+        <div style={{ position:"absolute", top:"40%", right:"10%", width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle, rgba(80,255,200,0.25), transparent 70%)", filter:"blur(50px)", opacity:0.45 }} />
+        <div style={{ position:"absolute", top:"60%", left:"5%", width:200, height:200, borderRadius:"50%", background:"radial-gradient(circle, rgba(200,160,255,0.2), transparent 70%)", filter:"blur(40px)", opacity:0.4 }} />
       </div>
 
-      {/* Floating glassmorphism panels (decorative) */}
-      <div className="absolute pointer-events-none" style={{ top:"12%", left:"6%", width:160, height:100, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", backdropFilter:"blur(8px)" }}>
-        <div style={{ position:"absolute", top:6, left:6, right:6, height:1, background:"rgba(255,255,255,0.15)" }} />
+      {/* ── TOP-LEFT: Exit button + system panel ── */}
+      <div className="absolute" style={{ top: 24, left: 28, display: "flex", flexDirection: "column", gap: 10 }}>
+        {/* Exit button */}
+        <button
+          onClick={onExit}
+          style={{
+            display: "flex", alignItems: "center", gap: 8,
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.22)",
+            backdropFilter: "blur(12px)",
+            borderRadius: 6,
+            padding: "8px 16px",
+            color: "rgba(255,255,255,0.85)",
+            fontSize: 10, fontFamily: "monospace", letterSpacing: "0.3em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            transition: "all 0.3s",
+            opacity: showExit ? 1 : 0,
+            pointerEvents: showExit ? "auto" : "none",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.15)"; (e.currentTarget as HTMLElement).style.color = "white"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.85)"; }}
+        >
+          ← TOOLBOX
+        </button>
+
+        {/* System info panel */}
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "12px 14px", minWidth: 160 }}>
+          <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.3em", marginBottom: 8, textTransform: "uppercase" }}>SYS ◆ LIVE</div>
+          <div style={{ fontSize: 13, fontFamily: "monospace", color: "rgba(255,255,255,0.8)", letterSpacing: "0.06em", lineHeight: 1.3 }}>{timeStr}</div>
+          <div style={{ fontSize: 9, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", marginTop: 2, letterSpacing: "0.1em" }}>{dateStr}</div>
+          <div style={{ marginTop: 10, height: 1, background: "rgba(255,255,255,0.1)" }} />
+          <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em" }}>
+              <span>HANDS</span>
+              <span style={{ color: landmarksRef.current.length > 0 ? "rgba(100,255,160,0.85)" : "rgba(255,255,255,0.35)" }}>{landmarksRef.current.length} / 2</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em" }}>
+              <span>MODE</span>
+              <span style={{ color: status === "tracking" ? "rgba(100,255,160,0.85)" : "rgba(255,200,80,0.7)" }}>{status.toUpperCase()}</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="absolute pointer-events-none" style={{ bottom:"14%", left:"8%", width:120, height:80, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", backdropFilter:"blur(8px)" }} />
-      <div className="absolute pointer-events-none" style={{ top:"18%", right:"7%", width:200, height:120, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)", backdropFilter:"blur(8px)" }}>
-        <div style={{ position:"absolute", bottom:6, left:6, right:6, height:1, background:"rgba(255,255,255,0.12)" }} />
+
+      {/* ── TOP-RIGHT: Title + info ── */}
+      <div className="absolute" style={{ top: 24, right: 28, textAlign: "right" }}>
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "14px 18px", display: "inline-block" }}>
+          <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 4 }}>TOOLBOX /// SECRET</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: "rgba(255,255,255,0.75)", letterSpacing: "-0.04em" }}>GLASSMORPHISM</div>
+          <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.25)", letterSpacing: "0.15em", marginTop: 4 }}>HAND-TRACKING CANVAS</div>
+        </div>
+      </div>
+
+      {/* ── LEFT SIDE: Decorative panel ── */}
+      <div className="absolute pointer-events-none" style={{ top: "50%", left: 28, transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 8, width: 140 }}>
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "14px 12px" }}>
+          <div style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.3)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>VISUALIZER</div>
+          {[0.9, 0.6, 0.8, 0.45, 0.7].map((v, i) => (
+            <div key={i} style={{ marginBottom: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                <span style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em" }}>CH {String(i+1).padStart(2,"0")}</span>
+                <span style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.35)" }}>{Math.round(v * 100)}%</span>
+              </div>
+              <div style={{ height: 2, background: "rgba(255,255,255,0.08)", borderRadius: 1 }}>
+                <div style={{ height: "100%", width: `${v * 100}%`, background: `rgba(255,255,255,${0.2 + v * 0.4})`, borderRadius: 1 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "12px 12px" }}>
+          <div style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.25)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>CONFIG</div>
+          {["MODEL: FULL", "CONF: 0.75", "TRACK: 0.50", "HANDS: 2"].map((line, i) => (
+            <div key={i} style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", lineHeight: 1.8 }}>{line}</div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── RIGHT SIDE: Decorative panel ── */}
+      <div className="absolute pointer-events-none" style={{ top: "50%", right: 28, transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 8, width: 150 }}>
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "14px 12px" }}>
+          <div style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.3)", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: 10 }}>GESTURES</div>
+          {[
+            { label: "INDEX L", active: false },
+            { label: "INDEX R", active: false },
+            { label: "PINCH L", active: false },
+            { label: "PINCH R", active: false },
+            { label: "GLASS", active: false },
+          ].map((g, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 7 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: g.active ? "rgba(100,255,160,0.9)" : "rgba(255,255,255,0.15)", boxShadow: g.active ? "0 0 6px rgba(100,255,160,0.5)" : "none", flexShrink: 0 }} />
+              <span style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.15em" }}>{g.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "12px 12px" }}>
+          <div style={{ fontSize: 7, fontFamily: "monospace", color: "rgba(255,255,255,0.25)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 8 }}>HOW TO</div>
+          <div style={{ fontSize: 8, fontFamily: "monospace", color: "rgba(255,255,255,0.4)", lineHeight: 1.9, letterSpacing: "0.05em" }}>
+            1. SHOW 2 HANDS<br />
+            2. INDEX FINGERS<br />
+            &nbsp;&nbsp;&nbsp;DEFINE GLASS<br />
+            3. PINCH TO<br />
+            &nbsp;&nbsp;&nbsp;DISTORT
+          </div>
+        </div>
       </div>
 
       {/* Camera window */}
       <div className="absolute" style={{ top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:560, height:420 }}>
         {/* Corner brackets */}
         {([[0,0,"tl"],[1,0,"tr"],[0,1,"bl"],[1,1,"br"]] as [number,number,string][]).map(([rx,ry,k]) => (
-          <div key={k} className="absolute w-4 h-4 pointer-events-none" style={{
+          <div key={k} className="absolute w-5 h-5 pointer-events-none" style={{
             top: ry === 0 ? -1 : "auto", bottom: ry === 1 ? -1 : "auto",
             left: rx === 0 ? -1 : "auto", right: rx === 1 ? -1 : "auto",
-            borderTop: ry === 0 ? "1px solid rgba(255,255,255,0.5)" : undefined,
-            borderBottom: ry === 1 ? "1px solid rgba(255,255,255,0.5)" : undefined,
-            borderLeft: rx === 0 ? "1px solid rgba(255,255,255,0.5)" : undefined,
-            borderRight: rx === 1 ? "1px solid rgba(255,255,255,0.5)" : undefined,
+            borderTop: ry === 0 ? "1.5px solid rgba(255,255,255,0.6)" : undefined,
+            borderBottom: ry === 1 ? "1.5px solid rgba(255,255,255,0.6)" : undefined,
+            borderLeft: rx === 0 ? "1.5px solid rgba(255,255,255,0.6)" : undefined,
+            borderRight: rx === 1 ? "1.5px solid rgba(255,255,255,0.6)" : undefined,
           }} />
         ))}
 
         {/* Status label */}
-        <div className="absolute pointer-events-none" style={{ top:-22, left:0, fontSize:9, fontFamily:"monospace", color:"rgba(255,255,255,0.2)", letterSpacing:"0.25em", textTransform:"uppercase" }}>
+        <div className="absolute pointer-events-none" style={{ top:-22, left:0, fontSize:9, fontFamily:"monospace", color:"rgba(255,255,255,0.35)", letterSpacing:"0.25em", textTransform:"uppercase" }}>
           CAMERA ◆ {status === "tracking" ? "TRACKING" : status === "ready" ? "READY" : status === "loading" ? "LOADING..." : "ERROR"}
+        </div>
+
+        {/* Resolution label */}
+        <div className="absolute pointer-events-none" style={{ top:-22, right:0, fontSize:9, fontFamily:"monospace", color:"rgba(255,255,255,0.2)", letterSpacing:"0.2em" }}>
+          640 × 480
         </div>
 
         <video
@@ -346,13 +468,13 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         />
 
         {status === "loading" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/90">
-            <p className="text-white/30 text-[10px] tracking-[0.3em] uppercase animate-pulse">Loading hand model…</p>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/85">
+            <p className="text-white/50 text-[10px] tracking-[0.3em] uppercase animate-pulse">Loading hand model…</p>
           </div>
         )}
         {status === "error" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/90">
-            <p className="text-white/35 text-[10px] tracking-widest uppercase text-center leading-6">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/85">
+            <p className="text-white/55 text-[10px] tracking-widest uppercase text-center leading-6">
               Camera access required<br />Allow permission &amp; reload
             </p>
           </div>
@@ -362,27 +484,15 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
       {/* Canvas overlay (full screen) */}
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
 
-      {/* Back button — delayed 3s so camera permission click doesn't accidentally close */}
-      <button
-        onClick={onExit}
-        className="absolute top-6 left-8 z-20 text-white/20 hover:text-white/70 transition-all duration-500"
-        style={{ fontSize:9, fontFamily:"monospace", letterSpacing:"0.4em", textTransform:"uppercase", opacity: showExit ? 1 : 0, pointerEvents: showExit ? 'auto' : 'none' }}
-      >
-        ← TOOLBOX
-      </button>
-
-      {/* Title */}
-      <div className="absolute top-6 right-8 z-20 text-right pointer-events-none">
-        <p style={{ fontSize:9, fontFamily:"monospace", color:"rgba(255,255,255,0.15)", letterSpacing:"0.3em", textTransform:"uppercase" }}>SECRET ///</p>
-        <p style={{ fontSize:13, fontWeight:900, color:"rgba(255,255,255,0.45)", letterSpacing:"-0.03em", marginTop:2 }}>GLASSMORPHISM</p>
-      </div>
-
-      {/* Instructions */}
+      {/* ── BOTTOM: Instructions bar ── */}
       {status !== "error" && (
-        <div className="absolute bottom-7 left-0 right-0 flex justify-center z-20 pointer-events-none">
-          <div style={{ display:"flex", gap:32, color:"rgba(255,255,255,0.18)", fontSize:9, fontFamily:"monospace", letterSpacing:"0.25em", textTransform:"uppercase" }}>
+        <div className="absolute pointer-events-none" style={{ bottom: 24, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
+          <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", borderRadius: 6, padding: "10px 24px", display: "flex", gap: 36, color: "rgba(255,255,255,0.45)", fontSize: 9, fontFamily: "monospace", letterSpacing: "0.25em", textTransform: "uppercase" }}>
             <span>☞ TWO INDEX FINGERS → DEFINE GLASS</span>
+            <span style={{ color: "rgba(255,255,255,0.2)" }}>|</span>
             <span>☞ PINCH TO DISTORT</span>
+            <span style={{ color: "rgba(255,255,255,0.2)" }}>|</span>
+            <span>ESC TO EXIT</span>
           </div>
         </div>
       )}
