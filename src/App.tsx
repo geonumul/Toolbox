@@ -29,6 +29,7 @@ import { useData } from './utils/data';
 function App() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState('home');
+  const [isSecretOpen, setIsSecretOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { data, updateData, updateConfig } = useData();
 
@@ -194,7 +195,7 @@ function App() {
       case 'archive':
         return <ArchivePage data={archiveItems} onArchiveUpdate={handleArchiveUpdate} isEditing={isEditing} />;
       case 'secret':
-        return null;
+        return <main><Hero /><Marquee /><Recruitment data={data.recruitment} updateData={updateData} isEditing={isEditing} /></main>;
       case 'admin':
         return <AdminPage teamData={data.team} />;
       case 'success':
@@ -220,10 +221,11 @@ function App() {
 
         {!loading && (
           <>
-              <Header 
-                  currentPage={page} 
-                  setPage={setPage} 
-                  liveLink={data.config?.liveStudioLink || '#'} 
+              <Header
+                  currentPage={page}
+                  setPage={setPage}
+                  onOpenSecret={() => setIsSecretOpen(true)}
+                  liveLink={data.config?.liveStudioLink || '#'}
                   googleMeetLink={data.config?.googleMeetLink}
                   slackLink={data.config?.slackLink}
                   toggleEditMode={() => setIsEditing(!isEditing)}
@@ -263,8 +265,8 @@ function App() {
       </div>
 
       {/* SecretPage rendered outside all wrappers to avoid transform/stacking issues */}
-      {!loading && page === 'secret' && (
-        <SecretPage onExit={() => setPage('home')} />
+      {isSecretOpen && (
+        <SecretPage onExit={() => setIsSecretOpen(false)} />
       )}
     </>
   );

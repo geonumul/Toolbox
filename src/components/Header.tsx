@@ -7,6 +7,7 @@ import { AdminLoginModal } from './ui/AdminLoginModal';
 interface HeaderProps {
   currentPage: string;
   setPage: (page: string) => void;
+  onOpenSecret?: () => void;
   liveLink: string;
   googleMeetLink?: string;
   slackLink?: string;
@@ -17,14 +18,15 @@ interface HeaderProps {
   inboxCount?: number;
 }
 
-export const Header = ({ 
-    currentPage, 
-    setPage, 
-    liveLink, 
-    googleMeetLink, 
-    slackLink, 
-    toggleEditMode, 
-    isEditing = false, 
+export const Header = ({
+    currentPage,
+    setPage,
+    onOpenSecret,
+    liveLink,
+    googleMeetLink,
+    slackLink,
+    toggleEditMode,
+    isEditing = false,
     updateConfig,
     onOpenInbox,
     inboxCount = 0
@@ -33,10 +35,9 @@ export const Header = ({
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const handleLogoClick = () => {
-    setPage('secret');
+    if (onOpenSecret) onOpenSecret();
+    else setPage('home');
   };
-
-  const handleLogoDoubleClick = () => {};
   
   const menuItems = [
     { label: 'HOME', id: 'home' },
@@ -88,7 +89,6 @@ export const Header = ({
         <div className="pointer-events-auto">
             <button
                 onClick={handleLogoClick}
-                onDoubleClick={handleLogoDoubleClick}
                 className="font-black text-2xl tracking-tighter hover:opacity-70 transition-opacity"
             >
                 TOOLBOX
