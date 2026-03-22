@@ -284,7 +284,7 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
   }, [onExit]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden" style={{ background: "#080808" }}>
+    <div className="fixed inset-0 overflow-hidden z-[9999]" style={{ background: "#080808" }}>
 
       {/* Background: subtle grid */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.035 }}>
