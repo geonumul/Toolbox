@@ -34,9 +34,24 @@ export const Header = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleLogoClick = () => {
-    if (onOpenSecret) onOpenSecret();
-    else setPage('home');
+    clickCountRef.current += 1;
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+
+    if (clickCountRef.current >= 3) {
+      clickCountRef.current = 0;
+      if (onOpenSecret) onOpenSecret();
+      return;
+    }
+
+    // 1~2번 클릭: 500ms 안에 추가 클릭 없으면 홈으로
+    clickTimerRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+      setPage('home');
+    }, 500);
   };
   
   const menuItems = [
