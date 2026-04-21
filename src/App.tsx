@@ -25,9 +25,29 @@ import { AdminPage } from './components/pages/AdminPage';
 // Data Hook
 import { useData } from './utils/data';
 
+const ROUTES = ['home', 'gallery', 'activities', 'schedule', 'team', 'archive', 'admin', 'success'];
+
+const pathToPage = (pathname: string) => {
+  const segment = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (!segment) return 'home';
+  return ROUTES.includes(segment) ? segment : 'home';
+};
+
+const pageToPath = (page: string) => (page === 'home' ? '/' : `/${page}`);
+
 function App() {
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState('home');
+  const [page, setPageState] = useState(() =>
+    typeof window === 'undefined' ? 'home' : pathToPage(window.location.pathname)
+  );
+
+  const setPage = (next: string) => {
+    setPageState(next);
+    const target = pageToPath(next);
+    if (typeof window !== 'undefined' && window.location.pathname !== target) {
+      window.history.pushState({}, '', target);
+    }
+  };
   const [isSecretOpen, setIsSecretOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { data, updateData, updateConfig } = useData();
@@ -123,11 +143,11 @@ function App() {
     window.scrollTo(0, 0);
   }, [page]);
 
-  // Check URL for admin route
+  // Sync page state with browser back/forward navigation
   useEffect(() => {
-    if (window.location.pathname === '/admin') {
-      setPage('admin');
-    }
+    const onPopState = () => setPageState(pathToPage(window.location.pathname));
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
   const handleUpdateConfig = (key: string, value: string) => {
