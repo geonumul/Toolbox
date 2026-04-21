@@ -47,6 +47,8 @@ const LEGACY_IDS = [
   '2025-10-21-break',
   '2026-04-06-break', '2026-04-13-break', '2026-04-20-break',
   '2026-04-27-break',
+  // superseded final-break id (was 2026-04-06)
+  '2026-04-06-final-break',
 ];
 
 const MON = '19:00–21:00';
@@ -97,8 +99,8 @@ const EVENTS = [
   { id: '2026-03-23-illust-lisp',  date: '2026-03-23', title: '일러스트레이터 & 캐드 리습', description: '유승민·박경준 일러스트레이터 사이트 다이어그램 강의 및 고건 캐드 리습 강의', time: MON, location: MEET },
   { id: '2026-03-30-web-portfolio',date: '2026-03-30', title: '피그마 웹 포트폴리오',        description: '피그마 토큰을 활용한 웹 포트폴리오 제작, 관리자 모드 포함 반응형 구현 목표', time: MON, location: MEET },
 
-  // 기말고사 기간 휴식 (4/6 ~ 5/3)
-  { id: '2026-04-06-final-break', date: '2026-04-06', title: '기말고사 휴식', description: '2026년 4월 6일부터 5월 3일까지 기말고사 기간 휴식', time: '', location: '' },
+  // 기말고사 기간 휴식 (3/31 ~ 5/3)
+  { id: '2026-03-31-final-break', date: '2026-03-31', title: '기말고사 휴식', description: '2026년 3월 31일부터 5월 3일까지 기말고사 기간 휴식', time: '', location: '' },
 
   { id: '2026-05-04-offline',      date: '2026-05-04', title: '대면 모임', description: '대면 모임 (세부 내용 미정)', time: MON, location: D208 },
 ];
