@@ -95,7 +95,7 @@ const EVENTS = [
   { id: '2026-03-02-revit-9',      date: '2026-03-02', title: 'Revit 9회차',     description: '진행 상황 공유 및 방향성 논의 (과제 없이 자유 참여)', time: MON, location: MEET },
 
   { id: '2026-03-09-portfolio',    date: '2026-03-09', title: '개인 프로젝트 크리틱',        description: '피그마 메이크로 웹 포트폴리오 제작 및 소모임원 상호 개인 프로젝트 크리틱', time: MON, location: MEET },
-  { id: '2026-03-16-project-pick', date: '2026-03-16', title: '프로젝트 방향 결정',         description: '프로젝트 방향 결정, 일러스트레이터 영상 학습 및 개인 크리틱', time: MON, location: MEET },
+  { id: '2026-03-16-project-pick', date: '2026-03-16', title: '프로젝트 방향 결정',         description: '프로젝트 방향 결정 및 일러스트레이터 영상 학습', time: MON, location: MEET },
   { id: '2026-03-23-illust-lisp',  date: '2026-03-23', title: '일러스트레이터 & 캐드 리습', description: '유승민·박경준 일러스트레이터 사이트 다이어그램 강의 및 고건 캐드 리습 강의', time: MON, location: MEET },
   { id: '2026-03-30-web-portfolio',date: '2026-03-30', title: '피그마 웹 포트폴리오',        description: '피그마 토큰을 활용한 웹 포트폴리오 제작, 관리자 모드 포함 반응형 구현 목표', time: MON, location: MEET },
 
