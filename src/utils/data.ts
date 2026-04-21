@@ -221,131 +221,6 @@ const DEFAULT_DATA = {
       description: "Submission of the competition entry.",
     },
   ],
-  study: [
-    {
-      id: 1,
-      week: "WEEK 14",
-      date: "2025-11-21",
-      title: "Final Critique",
-      content:
-        "Final presentation and feedback session. Wrapping up the semester.",
-      tags: ["Critique", "Final"],
-    },
-    {
-      id: 2,
-      week: "WEEK 13",
-      date: "2025-11-18",
-      title: "Team Dinner",
-      content: "Social gathering and networking.",
-      tags: ["Event", "Social"],
-    },
-    {
-      id: 3,
-      week: "WEEK 12",
-      date: "2025-11-14",
-      title: "Panel Critique 1",
-      content:
-        "First round of panel critiques. Feedback on layout and visual hierarchy.",
-      tags: ["Critique", "Layout"],
-    },
-    {
-      id: 4,
-      week: "WEEK 11",
-      date: "2025-11-11",
-      title: "D5 Workshop",
-      content:
-        "Applying D5 skills to individual projects. Q&A session.",
-      tags: ["Workshop", "Skills"],
-    },
-    {
-      id: 5,
-      week: "WEEK 10",
-      date: "2025-11-07",
-      title: "D5 Animation",
-      content:
-        "Learning animation techniques in D5 Render for architectural walkthroughs.",
-      tags: ["Tech", "Animation"],
-    },
-    {
-      id: 6,
-      week: "WEEK 9",
-      date: "2025-11-04",
-      title: "D5 Materials",
-      content:
-        "Deep dive into PBR materials and texturing workflow.",
-      tags: ["Tech", "Materials"],
-    },
-    {
-      id: 7,
-      week: "WEEK 8",
-      date: "2025-10-31",
-      title: "D5 Lighting",
-      content:
-        "Study on HDRI lighting, artificial lights, and atmosphere settings.",
-      tags: ["Tech", "Lighting"],
-    },
-    {
-      id: 8,
-      week: "WEEK 7",
-      date: "2025-10-28",
-      title: "D5 Render Intro",
-      content:
-        "Getting started with D5 Render. Interface and basic assets.",
-      tags: ["Tech", "Intro"],
-    },
-    {
-      id: 9,
-      week: "WEEK 6",
-      date: "2025-10-20",
-      title: "Midterm Prep",
-      content:
-        "Individual preparation for university midterm exams.",
-      tags: ["Exam", "Prep"],
-    },
-    {
-      id: 10,
-      week: "WEEK 5",
-      date: "2025-09-30",
-      title: "Rest Week",
-      content: "Break week. No official study session.",
-      tags: ["Break"],
-    },
-    {
-      id: 11,
-      week: "WEEK 4",
-      date: "2025-09-26",
-      title: "Portfolio Workshop",
-      content:
-        "Peer review of individual portfolios and layout refinements.",
-      tags: ["Review", "Design"],
-    },
-    {
-      id: 12,
-      week: "WEEK 3",
-      date: "2025-09-23",
-      title: "InDesign Advanced",
-      content:
-        "Advanced layout techniques and data merge for efficiency.",
-      tags: ["Tool", "InDesign"],
-    },
-    {
-      id: 13,
-      week: "WEEK 2",
-      date: "2025-09-16",
-      title: "InDesign Basics",
-      content:
-        "Introduction to Adobe InDesign interface and basic tools.",
-      tags: ["Tool", "InDesign"],
-    },
-    {
-      id: 14,
-      week: "WEEK 1",
-      date: "2025-09-09",
-      title: "Orientation",
-      content: "Course overview and team formation.",
-      tags: ["Intro", "Team"],
-    },
-  ],
   team: [
     {
       id: 1,
@@ -561,10 +436,7 @@ export const useData = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Basic migration check
-        if (parsed.study && parsed.study.length < 5) {
-          setData(DEFAULT_DATA);
-        } else {
+        {
           // Ensure config exists
           if (!parsed.config) {
              parsed.config = DEFAULT_DATA.config;

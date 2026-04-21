@@ -14,7 +14,7 @@ export const AdminPanel = ({ data, updateData, updateConfig, isOpen, onClose }: 
   const [activeTab, setActiveTab] = useState('gallery');
   const [liveLink, setLiveLink] = useState(data.config.liveStudioLink);
 
-  const tabs = ['gallery', 'schedule', 'study', 'team', 'archive'];
+  const tabs = ['gallery', 'schedule', 'team', 'archive'];
 
   const handleSaveConfig = () => {
     updateConfig('liveStudioLink', liveLink);
@@ -35,7 +35,6 @@ export const AdminPanel = ({ data, updateData, updateConfig, isOpen, onClose }: 
     let newItem = { id };
     if (section === 'gallery') newItem = { ...newItem, title: 'New Project', type: 'Projects', image: '', description: '' };
     if (section === 'schedule') newItem = { ...newItem, date: '2026-01-01', title: 'New Event', description: '' };
-    if (section === 'study') newItem = { ...newItem, date: '2026-01-01', title: 'New Study Log', content: '', tags: [] };
     if (section === 'team') newItem = { ...newItem, name: 'New Member', role: 'Role', bio: '', image: '' };
     if (section === 'archive') newItem = { ...newItem, year: '2026', title: 'New Entry', type: 'Award', issuer: '' };
 

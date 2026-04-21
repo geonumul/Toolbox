@@ -58,7 +58,6 @@ export const Header = ({
     { label: 'HOME', id: 'home' },
     { label: 'GALLERY', id: 'gallery' },
     { label: 'SCHEDULE', id: 'schedule' },
-    { label: 'STUDY', id: 'study' },
     { label: 'TEAM', id: 'team' },
     { label: 'ARCHIVE', id: 'archive' },
   ];

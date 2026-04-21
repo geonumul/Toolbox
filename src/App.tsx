@@ -18,7 +18,6 @@ import { collection, getDocs, query, orderBy, onSnapshot, addDoc, updateDoc, del
 import { GalleryPage } from './components/pages/GalleryPage';
 import { SecretPage } from './components/pages/SecretPage';
 import { SchedulePage } from './components/pages/SchedulePage';
-import { StudyPage } from './components/pages/StudyPage';
 import { TeamPage } from './components/pages/TeamPage';
 import { ArchivePage } from './components/pages/ArchivePage';
 import { AdminPage } from './components/pages/AdminPage';
@@ -39,7 +38,6 @@ function App() {
   const [projects, setProjects] = useState<any[]>([]);
   const [isProjectsLoading, setIsProjectsLoading] = useState(true);
   const [schedules, setSchedules] = useState<any[]>([]);
-  const [studyLogs, setStudyLogs] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [archiveItems, setArchiveItems] = useState<any[]>([]);
 
@@ -74,21 +72,6 @@ function App() {
       setSchedules(fetched);
     }, (error) => {
       console.error("Error fetching schedules: ", error);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // Fetch Study Logs from Firestore
-  useEffect(() => {
-    const q = query(collection(db, "studylogs"), orderBy("date", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetched = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setStudyLogs(fetched);
-    }, (error) => {
-      console.error("Error fetching study logs: ", error);
     });
     return () => unsubscribe();
   }, []);
@@ -188,9 +171,7 @@ function App() {
         />;
       case 'schedule':
         return <SchedulePage data={schedules.length > 0 ? schedules : data.schedule} updateData={updateData} isEditing={isEditing} />;
-      case 'study':
-        return <StudyPage data={studyLogs.length > 0 ? studyLogs : data.study} updateData={updateData} isEditing={isEditing} />;
-      case 'team': 
+      case 'team':
         return <TeamPage data={teamMembers.length > 0 ? teamMembers : data.team} updateData={updateData} isEditing={isEditing} />;
       case 'archive':
         return <ArchivePage data={archiveItems} onArchiveUpdate={handleArchiveUpdate} isEditing={isEditing} />;
