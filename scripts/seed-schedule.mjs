@@ -41,6 +41,12 @@ const LEGACY_IDS = [
   'cCZcgFYhI3ZD0RWE9RT1', 'BPfYnHzFFaBEgj6oCScS', 'tJnWoonMJRfwh9BgHl5g',
   'xYxz4RgdJeC7eVkeS5qJ', 'Um04g7GKpaiKR119aXoE', 'Cwg3fHjVHbbFSJODz23N',
   'fDAtaraqAdwVTHLAkqqj',
+  // individual break days collapsed into ranges (this revision)
+  '2025-09-30-break', '2025-10-03-break', '2025-10-07-break',
+  '2025-10-10-break', '2025-10-14-break', '2025-10-17-break',
+  '2025-10-21-break',
+  '2026-04-06-break', '2026-04-13-break', '2026-04-20-break',
+  '2026-04-27-break',
 ];
 
 const MON = '19:00–21:00';
@@ -58,14 +64,8 @@ const EVENTS = [
   { id: '2025-09-23-indesign-2',   date: '2025-09-23', title: '인디자인 2회차',  description: '선배들의 포트폴리오 피드백 공유 및 1회차 과제 복습', time: TUE, location: D341 },
   { id: '2025-09-26-indesign-3',   date: '2025-09-26', title: '인디자인 3회차',  description: '주요 CG 회사 소개 및 개인 이미지·프로젝트를 활용한 패널 레이아웃 구성', time: FRI, location: D341 },
 
-  // 시험기간 휴식 7회
-  { id: '2025-09-30-break',        date: '2025-09-30', title: '시험기간 휴식',   description: '중간고사 기간 휴식', time: '', location: '' },
-  { id: '2025-10-03-break',        date: '2025-10-03', title: '시험기간 휴식',   description: '중간고사 기간 휴식', time: '', location: '' },
-  { id: '2025-10-07-break',        date: '2025-10-07', title: '시험기간 휴식',   description: '중간고사 기간 휴식', time: '', location: '' },
-  { id: '2025-10-10-break',        date: '2025-10-10', title: '시험기간 휴식',   description: '중간고사 기간 휴식', time: '', location: '' },
-  { id: '2025-10-14-break',        date: '2025-10-14', title: '시험기간 휴식',   description: '중간고사 기간 휴식', time: '', location: '' },
-  { id: '2025-10-17-break',        date: '2025-10-17', title: '시험기간 휴식',   description: '중간고사 기간 휴식', time: '', location: '' },
-  { id: '2025-10-21-break',        date: '2025-10-21', title: '시험기간 휴식',   description: '중간고사 기간 휴식', time: '', location: '' },
+  // 중간고사 기간 휴식 (9/27 ~ 10/23)
+  { id: '2025-09-27-midterm-break', date: '2025-09-27', title: '중간고사 휴식', description: '2025년 9월 27일부터 10월 23일까지 중간고사 기간 휴식', time: '', location: '' },
 
   { id: '2025-10-24-indesign-4',   date: '2025-10-24', title: '인디자인 4회차',  description: '중간고사 이후 인디자인 세션 재개', time: FRI, location: D341 },
 
@@ -97,10 +97,8 @@ const EVENTS = [
   { id: '2026-03-23-illust-lisp',  date: '2026-03-23', title: '일러스트레이터 & 캐드 리습', description: '유승민·박경준 일러스트레이터 사이트 다이어그램 강의 및 고건 캐드 리습 강의', time: MON, location: MEET },
   { id: '2026-03-30-web-portfolio',date: '2026-03-30', title: '피그마 웹 포트폴리오',        description: '피그마 토큰을 활용한 웹 포트폴리오 제작, 관리자 모드 포함 반응형 구현 목표', time: MON, location: MEET },
 
-  { id: '2026-04-06-break',        date: '2026-04-06', title: '시험기간 휴식', description: '기말고사 기간 휴식', time: '', location: '' },
-  { id: '2026-04-13-break',        date: '2026-04-13', title: '시험기간 휴식', description: '기말고사 기간 휴식', time: '', location: '' },
-  { id: '2026-04-20-break',        date: '2026-04-20', title: '시험기간 휴식', description: '기말고사 기간 휴식', time: '', location: '' },
-  { id: '2026-04-27-break',        date: '2026-04-27', title: '시험기간 휴식', description: '기말고사 기간 휴식', time: '', location: '' },
+  // 기말고사 기간 휴식 (4/6 ~ 5/3)
+  { id: '2026-04-06-final-break', date: '2026-04-06', title: '기말고사 휴식', description: '2026년 4월 6일부터 5월 3일까지 기말고사 기간 휴식', time: '', location: '' },
 
   { id: '2026-05-04-offline',      date: '2026-05-04', title: '대면 모임', description: '대면 모임 (세부 내용 미정)', time: MON, location: D208 },
 ];
