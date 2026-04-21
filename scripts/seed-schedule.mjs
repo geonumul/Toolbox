@@ -89,9 +89,9 @@ const EVENTS = [
   { id: '2026-01-19-revit-3',      date: '2026-01-19', title: 'Revit 3회차',     description: '수치지형도 신청 및 변환, 스케치업 사이트 제작(루비) 강의, 매스 및 단선평면 학습', time: MON, location: MEET },
   { id: '2026-01-26-revit-4',      date: '2026-01-26', title: 'Revit 4회차',     description: '계획 재구성, 수치지형도 다운로드 및 스케치업 사이트 모델링', time: MON, location: MEET },
   { id: '2026-02-02-revit-5',      date: '2026-02-02', title: 'Revit 5회차',     description: '신입생 모집 시기 논의 및 매스스터디 강의·실습', time: MON, location: MEET },
-  { id: '2026-02-09-revit-6',      date: '2026-02-09', title: 'Revit 6회차',     description: '사이트 매핑(도로·횡단보도) 및 박경준 강의 후 개인 실습', time: MON, location: MEET },
+  { id: '2026-02-09-revit-6',      date: '2026-02-09', title: 'Revit 6회차',     description: '박경준 사이트 매핑(도로·횡단보도) 강의 후 개인 실습', time: MON, location: MEET },
   { id: '2026-02-16-revit-7',      date: '2026-02-16', title: 'Revit 7회차',     description: '설 연휴 휴식', time: '', location: '' },
-  { id: '2026-02-23-revit-8',      date: '2026-02-23', title: 'Revit 8회차',     description: '참여 인원 부족으로 휴식', time: '', location: '' },
+  { id: '2026-02-23-revit-8',      date: '2026-02-23', title: 'Revit 8회차',     description: '개별 일정 조율에 따른 자율 학습 주간', time: '', location: '' },
   { id: '2026-03-02-revit-9',      date: '2026-03-02', title: 'Revit 9회차',     description: '진행 상황 공유 및 방향성 논의 (과제 없이 자유 참여)', time: MON, location: MEET },
 
   { id: '2026-03-09-portfolio',    date: '2026-03-09', title: '포트폴리오 크리틱',          description: '피그마 메이크를 활용한 포트폴리오 제작 및 개인 프로젝트 오픈 크리틱', time: MON, location: MEET },
