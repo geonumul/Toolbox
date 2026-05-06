@@ -260,8 +260,10 @@ export const ProjectModal = ({
   };
 
   const handleSaveClick = () => {
-    if (project.type !== 'Activities' && !project.author?.trim()) {
-      alert('Author를 선택해주세요.');
+    const hasAuthor = project.type === 'Activities'
+      || normalizeAuthors(project.author).length > 0;
+    if (!hasAuthor) {
+      alert('Author를 한 명 이상 선택해주세요.');
       return;
     }
     if (onSave) {
@@ -350,7 +352,7 @@ export const ProjectModal = ({
                 dragElastic={0.18}
                 dragSnapToOrigin
                 onDragEnd={handleSwipe}
-                className={`absolute inset-0 flex items-center justify-center p-4 ${imageList.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                className={`absolute inset-0 flex items-center justify-center ${imageList.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
               >
                 <motion.img
                   key={currentImageIndex}
@@ -361,8 +363,10 @@ export const ProjectModal = ({
                     ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
                     : currentImage}
                   alt={project.title}
-                  style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }}
-                  className="object-contain select-none pointer-events-none"
+                  style={isEditing
+                    ? { maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }
+                    : { width: '100%', height: '100%' }}
+                  className={`select-none pointer-events-none ${isEditing ? 'object-contain' : 'object-cover'}`}
                   draggable={false}
                 />
               </motion.div>
