@@ -408,14 +408,16 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
 function ProjectCardInner({ item, activeTab }: { item: any; activeTab: string }) {
   return (
     <>
-      <div className="overflow-hidden aspect-square bg-muted relative mb-4 pointer-events-none">
+      <div className="overflow-hidden aspect-square bg-muted relative mb-4">
         <img
           src={/\.pdf(\?|$)/i.test(item.image) ? item.image.replace('/upload/', '/upload/pg_1,f_jpg/') : item.image}
           alt={item.title}
           draggable={false}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0 select-none"
+          onDragStart={(e) => e.preventDefault()}
+          style={{ WebkitUserDrag: 'none', userSelect: 'none' } as React.CSSProperties}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0 pointer-events-none select-none"
         />
-        <div className="absolute top-2 right-2 bg-primary text-primary-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 bg-primary text-primary-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
           <div className="w-2 h-2 bg-background rounded-full animate-pulse" />
         </div>
       </div>
