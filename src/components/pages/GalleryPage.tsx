@@ -406,21 +406,20 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
 // ────────── Subcomponents ──────────
 
 function ProjectCardInner({ item, activeTab }: { item: any; activeTab: string }) {
+  const imageSrc = /\.pdf(\?|$)/i.test(item.image)
+    ? item.image.replace('/upload/', '/upload/pg_1,f_jpg/')
+    : item.image;
   return (
     <>
-      <div className="overflow-hidden aspect-square bg-muted relative mb-4">
-        <img
-          src={/\.pdf(\?|$)/i.test(item.image) ? item.image.replace('/upload/', '/upload/pg_1,f_jpg/') : item.image}
-          alt={item.title}
-          draggable={false}
-          onDragStart={(e) => e.preventDefault()}
-          style={{ WebkitUserDrag: 'none' } as React.CSSProperties}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0 select-none"
+      {/* Use background-image on a <div> instead of <img> so Chrome never
+          treats it as a native-draggable element (no 🚫 cursor). */}
+      <div className="overflow-hidden aspect-square bg-muted relative mb-4 select-none">
+        <div
+          role="img"
+          aria-label={item.title}
+          className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0"
+          style={{ backgroundImage: `url(${imageSrc})` }}
         />
-        {/* Transparent overlay: catches all mouse events so the native image
-            drag handler never sees them. dnd-kit listeners on the parent
-            sortable card receive bubbled pointerdown. */}
-        <div className="absolute inset-0 z-[5]" />
         <div className="absolute top-2 right-2 bg-primary text-primary-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
           <div className="w-2 h-2 bg-background rounded-full animate-pulse" />
         </div>
