@@ -128,8 +128,47 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Inter', system-ui, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1, 'ss01' 1;
+    font-optical-sizing: auto;
+    letter-spacing: -0.005em;
+    line-height: 1.55;
+  }
+
+  /* Display-grade headings get tight tracking; Korean stays balanced */
+  h1, h2, h3 {
+    letter-spacing: -0.022em;
+    line-height: 1.25;
+  }
+
+  /* Tabular numerals on common metric carriers — keeps numbers from jittering */
+  time, .tabular,
+  [class*='font-mono'],
+  [class*='font-black'] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Slightly looser tracking inside small uppercase labels for legibility */
+  .uppercase {
+    font-feature-settings: 'kern' 1, 'liga' 0, 'calt' 0, 'ss01' 1;
+  }
+
+  /* Tighten oversized display text further */
+  .text-5xl, .text-6xl, .text-7xl, .text-8xl, .text-9xl {
+    letter-spacing: -0.045em;
+    line-height: 1.02;
+  }
+  .text-3xl, .text-4xl {
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+  }
+
+  /* Body text inside paragraphs gets a hair more breathing room */
+  p {
+    line-height: 1.65;
   }
 }
 
