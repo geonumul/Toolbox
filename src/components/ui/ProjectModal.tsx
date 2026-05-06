@@ -309,21 +309,21 @@ export const ProjectModal = ({
             </div>
           ) : (
             <>
-              {/* Image (animated, swipe-able) */}
-              <AnimatePresence mode="wait" initial={false}>
+              {/* Image (swipe-able) */}
+              <div className="flex-1 relative overflow-hidden flex items-center justify-center">
                 <motion.div
-                  key={currentImageIndex}
                   drag={imageList.length > 1 ? 'x' : false}
                   dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.2}
+                  dragElastic={0.18}
+                  dragSnapToOrigin
                   onDragEnd={handleSwipe}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.18 }}
-                  className={`flex-1 flex items-center justify-center ${imageList.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                  className={`flex items-center justify-center w-full h-full ${imageList.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
                 >
-                  <img
+                  <motion.img
+                    key={currentImageIndex}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.18 }}
                     src={currentImage && /\.pdf(\?|$)/i.test(currentImage)
                       ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
                       : currentImage}
@@ -332,7 +332,7 @@ export const ProjectModal = ({
                     draggable={false}
                   />
                 </motion.div>
-              </AnimatePresence>
+              </div>
 
               {/* Counter pill */}
               {imageList.length > 1 && (
