@@ -776,8 +776,15 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         <rect width="100%" height="100%" fill="url(#sg2)" />
       </svg>
 
-      <div className="absolute" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 560, height: 420, opacity: 0.16 }}>
-        <video ref={videoRef} className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)', display: 'block' }} muted playsInline autoPlay />
+      {/* Full-screen camera (very low opacity, ambient only). Mapping uses
+          the rendered rect, so hand reaches the entire viewport. */}
+      <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.12 }}>
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          style={{ transform: 'scaleX(-1)', display: 'block' }}
+          muted playsInline autoPlay
+        />
       </div>
 
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
