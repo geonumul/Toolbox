@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ProjectModal } from '../ui/ProjectModal';
-import { X, Plus, Trash2, GripVertical } from 'lucide-react';
+import { X, Plus, Trash2 } from 'lucide-react';
 import { doc, updateDoc, collection, addDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { authorsMatch, formatAuthors } from '../../utils/authors';
@@ -310,7 +310,7 @@ export const GalleryPage = ({ data, initialTab = 'Projects', teamData = [], upda
 
                 {reorderEnabled && filteredData.length > 1 && (
                   <p className="text-center text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-6">
-                    💡 카드를 드래그해서 순서를 바꿀 수 있어요
+                    💡 카드를 잡고 끌면 순서를 바꿀 수 있어요 (짧게 클릭 = 열기)
                   </p>
                 )}
               </motion.div>
@@ -442,37 +442,27 @@ function SortableCard({ item, activeTab, onOpen, onDelete, isEditing }: {
     attributes, listeners, setNodeRef, transform, transition, isDragging,
   } = useSortable({ id: item.id });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.3 : 1,
+    opacity: isDragging ? 0.25 : 1,
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="group flex flex-col h-full relative"
+      {...attributes}
+      {...listeners}
+      onClick={onOpen}
+      className="group flex flex-col h-full relative cursor-grab active:cursor-grabbing touch-none select-none"
     >
-      {/* Drag handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="absolute top-2 left-2 z-50 bg-black/70 text-white p-1.5 rounded-md cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-        title="드래그해서 순서 변경"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <GripVertical size={14} />
-      </button>
-
-      {/* Clickable card body */}
-      <div className="cursor-pointer flex flex-col h-full" onClick={onOpen}>
-        <ProjectCardInner item={item} activeTab={activeTab} />
-      </div>
+      <ProjectCardInner item={item} activeTab={activeTab} />
 
       {isEditing && (
         <button
-          onClick={onDelete}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onDelete(e); }}
           className="absolute top-2 right-2 z-50 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg hover:scale-110 active:scale-95"
           title="Delete Project"
         >
