@@ -414,10 +414,14 @@ function ProjectCardInner({ item, activeTab }: { item: any; activeTab: string })
           alt={item.title}
           draggable={false}
           onDragStart={(e) => e.preventDefault()}
-          style={{ WebkitUserDrag: 'none', userSelect: 'none' } as React.CSSProperties}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0 pointer-events-none select-none"
+          style={{ WebkitUserDrag: 'none' } as React.CSSProperties}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0 select-none"
         />
-        <div className="absolute top-2 right-2 bg-primary text-primary-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+        {/* Transparent overlay: catches all mouse events so the native image
+            drag handler never sees them. dnd-kit listeners on the parent
+            sortable card receive bubbled pointerdown. */}
+        <div className="absolute inset-0 z-[5]" />
+        <div className="absolute top-2 right-2 bg-primary text-primary-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
           <div className="w-2 h-2 bg-background rounded-full animate-pulse" />
         </div>
       </div>
