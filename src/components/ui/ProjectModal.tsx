@@ -7,6 +7,60 @@ import {
 } from 'lucide-react';
 import { uploadFileToCloudinary } from '../../utils/uploadService';
 import { EditableField } from './EditableField';
+import { formatAuthors, normalizeAuthors } from '../../utils/authors';
+
+const FALLBACK_AUTHORS = [
+  'Ko Geon', 'Park Kyeong-jun', 'Yoo Seung-min', 'Ryu Hyun-jung',
+  'Yang Hyung-seok', 'Kwon Si-hyun', 'Kim Ji-eun', 'Shim Jung-eun',
+  'Kim Do-kyeong', 'Admin',
+];
+
+function AuthorMultiSelect({ value, teamData, onChange }: {
+  value: any;
+  teamData: any[];
+  onChange: (next: string[]) => void;
+}) {
+  const selected = normalizeAuthors(value);
+  const options = (teamData && teamData.length > 0)
+    ? teamData.map((m: any) => String(m.name).trim()).filter(Boolean)
+    : FALLBACK_AUTHORS;
+
+  const toggle = (name: string) => {
+    const trimmed = name.trim();
+    if (selected.includes(trimmed)) {
+      onChange(selected.filter(a => a !== trimmed));
+    } else {
+      onChange([...selected, trimmed]);
+    }
+  };
+
+  return (
+    <div className="-mx-1 px-1 py-1 bg-black/5 rounded">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 px-1">
+        Authors {selected.length > 0 && <span className="text-gray-600">({selected.length})</span>}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map(name => {
+          const active = selected.includes(name);
+          return (
+            <button
+              key={name}
+              type="button"
+              onClick={() => toggle(name)}
+              className={`px-2.5 py-1 text-[11px] rounded-full font-mono transition-all ${
+                active
+                  ? 'bg-black text-white shadow-sm'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              }`}
+            >
+              {name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 interface ProjectModalProps {
   project: any;
@@ -416,27 +470,13 @@ export const ProjectModal = ({
               {project.type !== 'Activities' && (
                 <div className="text-sm font-mono text-gray-500 mb-6">
                   {isEditing ? (
-                    <div className="relative">
-                      <select
-                        value={project.author || ''}
-                        onChange={(e) => handleUpdate('author', e.target.value.trim())}
-                        className="w-full bg-black/5 outline-none rounded px-2 py-1 -mx-1 border border-transparent focus:border-blue-500/30 transition appearance-none cursor-pointer"
-                      >
-                        <option value="" disabled>Select Author</option>
-                        {teamData && teamData.length > 0 ? (
-                          teamData.map((member: any) => (
-                            <option key={member.id} value={member.name.trim()}>{member.name}</option>
-                          ))
-                        ) : (
-                          ['Ko Geon', 'Park Kyeong-jun', 'Yoo Seung-min', 'Ryu Hyun-jung', 'Yang Hyung-seok', 'Kwon Si-hyun', 'Kim Ji-eun', 'Shim Jung-eun', 'Kim Do-kyeong', 'Admin'].map(name => (
-                            <option key={name} value={name}>{name}</option>
-                          ))
-                        )}
-                      </select>
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</div>
-                    </div>
+                    <AuthorMultiSelect
+                      value={project.author}
+                      teamData={teamData}
+                      onChange={(next) => handleUpdate('author', next)}
+                    />
                   ) : (
-                    project.author || 'Unknown'
+                    formatAuthors(project.author)
                   )}
                 </div>
               )}
