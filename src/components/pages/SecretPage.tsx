@@ -6,15 +6,18 @@ const INDEX_TIP = 8;
 
 // ──────────────────────── GAME CONSTANTS ────────────────────────
 const GAME_DURATION = 60_000;
-const TRAIL_LIFETIME = 320;        // ms a trail point lives
-const SLICE_VELOCITY = 5.5;        // px/frame minimum to slice
-const PINCH_THRESHOLD = 0.62;
-const SPAWN_INTERVAL_START = 900;
-const SPAWN_INTERVAL_END = 320;
+const TRAIL_LIFETIME = 380;        // ms a trail point lives
+const SLICE_VELOCITY = 2.5;        // px/frame minimum to slice (lowered from 5.5)
+const SLICE_HIT_PADDING = 14;      // extra forgiving radius for slice detection
+const PINCH_THRESHOLD = 0.55;
+const SPAWN_INTERVAL_START = 1500;
+const SPAWN_INTERVAL_END = 700;
 const POINTS_ORB = 10;
 const POINTS_CRYSTAL = 50;
 const PENALTY_BOMB = -50;
 const COMBO_MULT = (n: number) => Math.min(1 + n * 0.12, 4);
+const BOMB_CHANCE = 0.06;          // was 0.10
+const CRYSTAL_CHANCE = 0.12;       // was 0.08
 
 type Phase = 'intro' | 'countdown' | 'playing' | 'gameover';
 type ObjType = 'orb' | 'crystal' | 'bomb';
@@ -158,33 +161,30 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
       // Choose type
       const r = Math.random();
       let type: ObjType = 'orb';
-      if (r < 0.10) type = 'bomb';
-      else if (r < 0.18) type = 'crystal';
+      if (r < BOMB_CHANCE) type = 'bomb';
+      else if (r < BOMB_CHANCE + CRYSTAL_CHANCE) type = 'crystal';
 
       // Pick a side (most from bottom, some from sides for variety)
       const sideRoll = Math.random();
       let x, y, vx, vy;
-      const r0 = 26 + Math.random() * 14;
-      const speedX = (Math.random() - 0.5) * 0.4;
-      const upSpeed = -(0.95 + Math.random() * 0.55);
+      const r0 = 32 + Math.random() * 14;             // bigger objects (was 26 + 14)
+      const speedX = (Math.random() - 0.5) * 0.28;
+      const upSpeed = -(0.7 + Math.random() * 0.4);   // slower (was -(0.95 + 0.55))
       if (sideRoll < 0.7) {
-        // From bottom flying upward in arc
         x = 60 + Math.random() * (W - 120);
         y = H + 60;
-        vx = speedX + (x < W / 2 ? 0.08 : -0.08);
+        vx = speedX + (x < W / 2 ? 0.06 : -0.06);
         vy = upSpeed;
       } else if (sideRoll < 0.85) {
-        // From left
         x = -60;
         y = H * (0.4 + Math.random() * 0.5);
-        vx = 0.7 + Math.random() * 0.3;
-        vy = -0.4 - Math.random() * 0.3;
+        vx = 0.5 + Math.random() * 0.22;              // slower
+        vy = -0.3 - Math.random() * 0.22;
       } else {
-        // From right
         x = W + 60;
         y = H * (0.4 + Math.random() * 0.5);
-        vx = -(0.7 + Math.random() * 0.3);
-        vy = -0.4 - Math.random() * 0.3;
+        vx = -(0.5 + Math.random() * 0.22);
+        vy = -0.3 - Math.random() * 0.22;
       }
 
       objectsRef.current.push({
@@ -324,14 +324,14 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         const spawnInterval = SPAWN_INTERVAL_START * (1 - t) + SPAWN_INTERVAL_END * t;
         if (now - lastSpawnRef.current > spawnInterval) {
           spawnObject(W, H);
-          // Sometimes spawn a pair quickly for variety
-          if (Math.random() < 0.18) setTimeout(() => spawnObject(W, H), 110);
+          // Occasional pair spawn for variety (rarer + further apart)
+          if (Math.random() < 0.10) setTimeout(() => spawnObject(W, H), 220);
           lastSpawnRef.current = now;
         }
       }
 
       // ── Update objects (gravity, rotation, slicing) ──
-      const gravity = 0.0019; // px per ms²
+      const gravity = 0.0013; // px per ms² (was 0.0019)
       const surviving: FlyingObj[] = [];
       for (const obj of objectsRef.current) {
         if (obj.sliced) {
@@ -355,15 +355,9 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         obj.vy += gravity * dt;
         obj.rot += obj.rotSpeed * dt;
 
-        // Cull off-screen (below)
-        if (obj.y > H + 120) {
-          // Missed orb/crystal: small combo penalty for orbs only, none for bomb (good to dodge)
-          if (phase === 'playing' && obj.type === 'orb' && obj.age_ ? false : true) {
-            // Reset combo on missed orb (only if on screen long enough — i.e. user had a chance)
-            if (now - obj.spawnTime > 700) comboRef.current = 0;
-          }
-          continue;
-        }
+        // Cull off-screen (below). No combo penalty on miss — players keep
+        // their streak as long as they don't slice bombs or pinch wrong.
+        if (obj.y > H + 120) continue;
 
         // Slice detection (only during playing, only orbs and bombs sliceable)
         if (phase === 'playing' && (obj.type === 'orb' || obj.type === 'bomb')) {
@@ -375,7 +369,7 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
               const dy = h.tip.y - prev.y;
               const speed = Math.hypot(dx, dy);
               if (speed > SLICE_VELOCITY) {
-                if (segHitsCircle(prev, h.tip, obj.x, obj.y, obj.r)) {
+                if (segHitsCircle(prev, h.tip, obj.x, obj.y, obj.r + SLICE_HIT_PADDING)) {
                   obj.sliced = true;
                   obj.slicedAt = now;
                   obj.sliceAngle = Math.atan2(dy, dx);
