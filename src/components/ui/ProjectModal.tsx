@@ -277,15 +277,15 @@ export const ProjectModal = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-md"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 md:p-8"
       onClick={onClose}
     >
       <motion.div
-        layoutId={`project-card-${project.id}`}
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="bg-white w-full h-full md:w-[88vw] md:h-[82vh] md:max-w-[1200px] md:max-h-[760px] md:rounded-2xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden"
+        style={{ width: 'min(1100px, 90vw)', height: 'min(680px, 85vh)' }}
+        className="bg-white rounded-2xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onDragOver={(e) => { if (isEditing) { e.preventDefault(); setIsDragOver(true); } }}
         onDragLeave={() => setIsDragOver(false)}
