@@ -3,57 +3,53 @@ import React, { useEffect, useRef, useState } from 'react';
 // ──────────────────────── HAND LANDMARKS ────────────────────────
 const THUMB_TIP = 4;
 const INDEX_TIP = 8;
-const PALM = 9;
 
 // ──────────────────────── GAME CONSTANTS ────────────────────────
 const GAME_DURATION = 60_000;
-const ORB_SPAWN_INTERVAL_START = 1400;
-const ORB_SPAWN_INTERVAL_END = 600;
-const CAPTURE_THRESHOLD_MS = 550;
-const PINCH_THRESHOLD = 0.65;
-const SHADOW_CHANCE = 0.22;
-const MAX_ORBS = 9;
-const POINTS_NORMAL = 10;
-const POINTS_SHADOW = 25;
-const COMBO_MULT = (n: number) => Math.min(1 + n * 0.15, 5);
+const TRAIL_LIFETIME = 320;        // ms a trail point lives
+const SLICE_VELOCITY = 5.5;        // px/frame minimum to slice
+const PINCH_THRESHOLD = 0.62;
+const SPAWN_INTERVAL_START = 900;
+const SPAWN_INTERVAL_END = 320;
+const POINTS_ORB = 10;
+const POINTS_CRYSTAL = 50;
+const PENALTY_BOMB = -50;
+const COMBO_MULT = (n: number) => Math.min(1 + n * 0.12, 4);
 
 type Phase = 'intro' | 'countdown' | 'playing' | 'gameover';
+type ObjType = 'orb' | 'crystal' | 'bomb';
 
-interface Orb {
+interface FlyingObj {
   id: number;
   x: number; y: number;
   vx: number; vy: number;
-  r: number;
+  spawnTime: number;
+  rot: number; rotSpeed: number;
+  type: ObjType;
   hue: number;
-  shadow: boolean;
-  age: number;
-  inGlassFor: number;
-  dying: boolean;
-  dyingT: number;
-  destroyedBy: 'glass' | 'pinch' | null;
+  r: number;
+  sliced: boolean;
+  slicedAt: number;
+  sliceAngle: number;       // rad
+  halves: Array<{ ox: number; oy: number; vx: number; vy: number; rot: number; rotSpeed: number }>;
+  destroyed: boolean;
+  caught: boolean;          // crystal absorbed
+}
+
+interface TrailPoint {
+  x: number; y: number; t: number; hand: 0 | 1;
 }
 
 interface Particle {
-  x: number; y: number;
-  vx: number; vy: number;
-  life: number;
-  hue: number;
-  shadow: boolean;
-  size: number;
+  x: number; y: number; vx: number; vy: number;
+  life: number; hue: number; size: number; bomb: boolean;
 }
 
 interface FloatingText {
-  x: number; y: number;
-  text: string;
-  life: number;
-  color: string;
-  size: number;
+  x: number; y: number; text: string; life: number; color: string; size: number;
 }
 
-interface FlashEvent {
-  t: number; // 0..1 lifetime
-  kind: 'capture' | 'shatter' | 'penalty';
-}
+interface FlashEvent { t: number; kind: 'slice' | 'crystal' | 'bomb'; }
 
 const loadScript = (src: string): Promise<void> =>
   new Promise((res, rej) => {
@@ -72,25 +68,27 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
   const [status, setStatus] = useState<'loading' | 'ready' | 'tracking' | 'error'>('loading');
   const [showExit, setShowExit] = useState(false);
 
-  // ── Game state (refs so the rAF loop reads fresh values) ──
+  // ── Game state ──
   const phaseRef = useRef<Phase>('intro');
-  const scoreRef = useRef(0);
-  const comboRef = useRef(0);
-  const bestComboRef = useRef(0);
-  const orbsRef = useRef<Orb[]>([]);
+  const phaseStartRef = useRef(performance.now());
+  const objectsRef = useRef<FlyingObj[]>([]);
+  const trailsRef = useRef<TrailPoint[]>([]);
   const particlesRef = useRef<Particle[]>([]);
   const floatTextsRef = useRef<FloatingText[]>([]);
   const flashesRef = useRef<FlashEvent[]>([]);
-  const phaseStartRef = useRef(performance.now());
   const lastSpawnRef = useRef(0);
-  const orbIdRef = useRef(1);
+  const objIdRef = useRef(1);
   const handsHeldRef = useRef(0);
   const countdownRef = useRef(3);
-  const totalCapturesRef = useRef(0);
-  const totalShattersRef = useRef(0);
+  const scoreRef = useRef(0);
+  const comboRef = useRef(0);
+  const bestComboRef = useRef(0);
+  const totalSlicedRef = useRef(0);
+  const totalCrystalsRef = useRef(0);
+  const totalBombsRef = useRef(0);
   const displayScoreRef = useRef(0);
+  const handPrevRef = useRef<Array<{ x: number; y: number } | null>>([null, null]);
 
-  // Mirror to React state for HUD redraws
   const [, setUiTick] = useState(0);
 
   useEffect(() => {
@@ -156,42 +154,71 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
     let rafId: number;
     let lastT = performance.now();
 
-    const spawnOrb = (W: number, H: number) => {
-      const margin = 80;
-      const r = 22 + Math.random() * 16;
-      const shadow = Math.random() < SHADOW_CHANCE;
-      // Spawn just inside the screen, drifting toward the centre
-      const side = Math.floor(Math.random() * 4);
-      let x = 0, y = 0, vx = 0, vy = 0;
-      const speed = 0.04 + Math.random() * 0.05;
-      if (side === 0) { x = margin; y = margin + Math.random() * (H - margin * 2); vx = speed; vy = (Math.random() - 0.5) * 0.04; }
-      else if (side === 1) { x = W - margin; y = margin + Math.random() * (H - margin * 2); vx = -speed; vy = (Math.random() - 0.5) * 0.04; }
-      else if (side === 2) { x = margin + Math.random() * (W - margin * 2); y = margin; vx = (Math.random() - 0.5) * 0.04; vy = speed; }
-      else { x = margin + Math.random() * (W - margin * 2); y = H - margin; vx = (Math.random() - 0.5) * 0.04; vy = -speed; }
-      orbsRef.current.push({
-        id: orbIdRef.current++, x, y, vx, vy, r,
-        hue: shadow ? 280 + Math.random() * 60 : 30 + Math.random() * 320,
-        shadow, age: 0, inGlassFor: 0,
-        dying: false, dyingT: 0, destroyedBy: null,
+    const spawnObject = (W: number, H: number) => {
+      // Choose type
+      const r = Math.random();
+      let type: ObjType = 'orb';
+      if (r < 0.10) type = 'bomb';
+      else if (r < 0.18) type = 'crystal';
+
+      // Pick a side (most from bottom, some from sides for variety)
+      const sideRoll = Math.random();
+      let x, y, vx, vy;
+      const r0 = 26 + Math.random() * 14;
+      const speedX = (Math.random() - 0.5) * 0.4;
+      const upSpeed = -(0.95 + Math.random() * 0.55);
+      if (sideRoll < 0.7) {
+        // From bottom flying upward in arc
+        x = 60 + Math.random() * (W - 120);
+        y = H + 60;
+        vx = speedX + (x < W / 2 ? 0.08 : -0.08);
+        vy = upSpeed;
+      } else if (sideRoll < 0.85) {
+        // From left
+        x = -60;
+        y = H * (0.4 + Math.random() * 0.5);
+        vx = 0.7 + Math.random() * 0.3;
+        vy = -0.4 - Math.random() * 0.3;
+      } else {
+        // From right
+        x = W + 60;
+        y = H * (0.4 + Math.random() * 0.5);
+        vx = -(0.7 + Math.random() * 0.3);
+        vy = -0.4 - Math.random() * 0.3;
+      }
+
+      objectsRef.current.push({
+        id: objIdRef.current++,
+        x, y, vx, vy,
+        spawnTime: performance.now(),
+        rot: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.06,
+        type,
+        hue: type === 'bomb' ? 0 : type === 'crystal' ? 48 : 180 + Math.random() * 180,
+        r: r0,
+        sliced: false,
+        slicedAt: 0,
+        sliceAngle: 0,
+        halves: [],
+        destroyed: false,
+        caught: false,
       });
     };
 
-    const burst = (x: number, y: number, hue: number, shadow: boolean, count = 14) => {
+    const burst = (x: number, y: number, hue: number, count: number, bomb: boolean) => {
       for (let i = 0; i < count; i++) {
         const a = Math.random() * Math.PI * 2;
-        const sp = 1 + Math.random() * 3;
+        const sp = 1 + Math.random() * 4;
         particlesRef.current.push({
-          x, y,
-          vx: Math.cos(a) * sp,
-          vy: Math.sin(a) * sp,
-          life: 1, hue, shadow,
-          size: 1.5 + Math.random() * 2.5,
+          x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+          life: 1, hue, size: 1.5 + Math.random() * 2.8, bomb,
         });
       }
     };
 
     const resetGame = () => {
-      orbsRef.current = [];
+      objectsRef.current = [];
+      trailsRef.current = [];
       particlesRef.current = [];
       floatTextsRef.current = [];
       flashesRef.current = [];
@@ -199,18 +226,34 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
       displayScoreRef.current = 0;
       comboRef.current = 0;
       bestComboRef.current = 0;
-      totalCapturesRef.current = 0;
-      totalShattersRef.current = 0;
+      totalSlicedRef.current = 0;
+      totalCrystalsRef.current = 0;
+      totalBombsRef.current = 0;
       lastSpawnRef.current = 0;
       countdownRef.current = 3;
       handsHeldRef.current = 0;
+      handPrevRef.current = [null, null];
     };
 
-    const pushFloatingText = (x: number, y: number, text: string, color: string, size = 22) => {
+    const pushFloating = (x: number, y: number, text: string, color: string, size = 22) => {
       floatTextsRef.current.push({ x, y, text, life: 1, color, size });
     };
-    const pushFlash = (kind: FlashEvent['kind']) => {
-      flashesRef.current.push({ t: 0, kind });
+    const pushFlash = (kind: FlashEvent['kind']) => flashesRef.current.push({ t: 0, kind });
+
+    // Test if a line segment from p0 to p1 intersects a circle (cx, cy, r)
+    const segHitsCircle = (p0: { x: number; y: number }, p1: { x: number; y: number }, cx: number, cy: number, r: number) => {
+      const dx = p1.x - p0.x;
+      const dy = p1.y - p0.y;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) {
+        const ddx = cx - p0.x; const ddy = cy - p0.y;
+        return ddx * ddx + ddy * ddy <= r * r;
+      }
+      const t = Math.max(0, Math.min(1, ((cx - p0.x) * dx + (cy - p0.y) * dy) / lenSq));
+      const px = p0.x + t * dx;
+      const py = p0.y + t * dy;
+      const ddx = cx - px; const ddy = cy - py;
+      return ddx * ddx + ddy * ddy <= r * r;
     };
 
     const draw = () => {
@@ -228,172 +271,180 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
       if (!video) { rafId = requestAnimationFrame(draw); return; }
 
       const vr = video.getBoundingClientRect();
-      const toC = (lm: any) => ({
-        x: vr.left + (1 - lm.x) * vr.width,
-        y: vr.top + lm.y * vr.height,
-      });
+      const toC = (lm: any) => ({ x: vr.left + (1 - lm.x) * vr.width, y: vr.top + lm.y * vr.height });
 
-      // ── Hand info ──
-      let glassRect: { x: number; y: number; w: number; h: number } | null = null;
-      let p0 = 0, p1 = 0;
-      let hand0: { tip: any; thumb: any; palm: any; pinch: number } | null = null;
-      let hand1: { tip: any; thumb: any; palm: any; pinch: number } | null = null;
-
-      if (lms.length >= 1) {
-        const tip = toC(lms[0][INDEX_TIP]);
-        const thumb = toC(lms[0][THUMB_TIP]);
-        const palm = toC(lms[0][PALM]);
+      // Hand info
+      const hands: Array<{ tip: { x: number; y: number }; pinch: number } | null> = [null, null];
+      for (let i = 0; i < Math.min(2, lms.length); i++) {
+        const tip = toC(lms[i][INDEX_TIP]);
+        const thumb = toC(lms[i][THUMB_TIP]);
         const maxPinchPx = 80;
-        p0 = Math.max(0, Math.min(1, 1 - Math.hypot(tip.x - thumb.x, tip.y - thumb.y) / maxPinchPx));
-        hand0 = { tip, thumb, palm, pinch: p0 };
+        const pinch = Math.max(0, Math.min(1, 1 - Math.hypot(tip.x - thumb.x, tip.y - thumb.y) / maxPinchPx));
+        hands[i] = { tip, pinch };
       }
-      if (lms.length >= 2) {
-        const tip = toC(lms[1][INDEX_TIP]);
-        const thumb = toC(lms[1][THUMB_TIP]);
-        const palm = toC(lms[1][PALM]);
-        const maxPinchPx = 80;
-        p1 = Math.max(0, Math.min(1, 1 - Math.hypot(tip.x - thumb.x, tip.y - thumb.y) / maxPinchPx));
-        hand1 = { tip, thumb, palm, pinch: p1 };
 
-        const ax = Math.min(hand0!.tip.x, hand1.tip.x);
-        const ay = Math.min(hand0!.tip.y, hand1.tip.y);
-        const bx = Math.max(hand0!.tip.x, hand1.tip.x);
-        const by = Math.max(hand0!.tip.y, hand1.tip.y);
-        const w = bx - ax;
-        const h = by - ay;
-        if (w > 40 && h > 40) glassRect = { x: ax, y: ay, w, h };
-      }
+      const phase = phaseRef.current;
 
       // ── Phase transitions ──
-      const phase = phaseRef.current;
       if (phase === 'intro') {
-        if (lms.length === 2) handsHeldRef.current += dt; else handsHeldRef.current = 0;
-        if (handsHeldRef.current > 1000) {
+        if (lms.length >= 1) handsHeldRef.current += dt; else handsHeldRef.current = 0;
+        if (handsHeldRef.current > 800) {
           phaseRef.current = 'countdown';
           phaseStartRef.current = now;
           countdownRef.current = 3;
         }
       } else if (phase === 'countdown') {
         const elapsed = now - phaseStartRef.current;
-        const cd = 3 - Math.floor(elapsed / 1000);
-        countdownRef.current = cd;
+        countdownRef.current = 3 - Math.floor(elapsed / 1000);
         if (elapsed > 3000) {
-          phaseRef.current = 'playing';
-          phaseStartRef.current = now;
           resetGame();
           phaseRef.current = 'playing';
           phaseStartRef.current = now;
         }
       } else if (phase === 'playing') {
-        const elapsed = now - phaseStartRef.current;
-        if (elapsed > GAME_DURATION) {
+        if (now - phaseStartRef.current > GAME_DURATION) {
           phaseRef.current = 'gameover';
           phaseStartRef.current = now;
         }
       }
 
-      // ── Spawn orbs while playing ──
+      // ── Trail update: drop new points, kill old ones ──
+      if (phase === 'playing') {
+        for (let i = 0; i < 2; i++) {
+          const h = hands[i];
+          if (h) trailsRef.current.push({ x: h.tip.x, y: h.tip.y, t: now, hand: i as 0 | 1 });
+        }
+      }
+      trailsRef.current = trailsRef.current.filter(p => now - p.t < TRAIL_LIFETIME);
+
+      // ── Spawn ──
       if (phase === 'playing') {
         const elapsed = now - phaseStartRef.current;
         const t = Math.min(1, elapsed / GAME_DURATION);
-        const spawnInterval = ORB_SPAWN_INTERVAL_START * (1 - t) + ORB_SPAWN_INTERVAL_END * t;
-        if (now - lastSpawnRef.current > spawnInterval && orbsRef.current.length < MAX_ORBS) {
-          spawnOrb(W, H);
+        const spawnInterval = SPAWN_INTERVAL_START * (1 - t) + SPAWN_INTERVAL_END * t;
+        if (now - lastSpawnRef.current > spawnInterval) {
+          spawnObject(W, H);
+          // Sometimes spawn a pair quickly for variety
+          if (Math.random() < 0.18) setTimeout(() => spawnObject(W, H), 110);
           lastSpawnRef.current = now;
         }
       }
 
-      // ── Update orbs ──
-      const surviving: Orb[] = [];
-      for (const orb of orbsRef.current) {
-        orb.age += dt;
-        if (orb.dying) {
-          orb.dyingT += dt / 350;
-          if (orb.dyingT < 1) surviving.push(orb);
+      // ── Update objects (gravity, rotation, slicing) ──
+      const gravity = 0.0019; // px per ms²
+      const surviving: FlyingObj[] = [];
+      for (const obj of objectsRef.current) {
+        if (obj.sliced) {
+          // Animate halves
+          const lifeT = (now - obj.slicedAt) / 800;
+          if (lifeT < 1) {
+            for (const half of obj.halves) {
+              half.ox += half.vx * dt;
+              half.oy += half.vy * dt;
+              half.vy += gravity * dt;
+              half.rot += half.rotSpeed * dt;
+            }
+            surviving.push(obj);
+          }
           continue;
         }
-        // Drift; gentle wall reflection
-        orb.x += orb.vx * dt;
-        orb.y += orb.vy * dt;
-        if (orb.x < 30 || orb.x > W - 30) orb.vx *= -1;
-        if (orb.y < 30 || orb.y > H - 30) orb.vy *= -1;
 
-        let killed = false;
+        // Move + gravity
+        obj.x += obj.vx * dt;
+        obj.y += obj.vy * dt;
+        obj.vy += gravity * dt;
+        obj.rot += obj.rotSpeed * dt;
 
-        if (phase === 'playing') {
-          // Glass capture (normal orbs only)
-          if (!orb.shadow && glassRect) {
-            const inside =
-              orb.x > glassRect.x + orb.r * 0.4 &&
-              orb.x < glassRect.x + glassRect.w - orb.r * 0.4 &&
-              orb.y > glassRect.y + orb.r * 0.4 &&
-              orb.y < glassRect.y + glassRect.h - orb.r * 0.4;
-            if (inside) orb.inGlassFor += dt; else orb.inGlassFor = Math.max(0, orb.inGlassFor - dt * 0.5);
-            if (orb.inGlassFor > CAPTURE_THRESHOLD_MS) {
-              comboRef.current += 1;
-              bestComboRef.current = Math.max(bestComboRef.current, comboRef.current);
-              const gain = Math.round(POINTS_NORMAL * COMBO_MULT(comboRef.current - 1));
-              scoreRef.current += gain;
-              totalCapturesRef.current += 1;
-              burst(orb.x, orb.y, orb.hue, false, 18);
-              pushFloatingText(orb.x, orb.y - 14, `+${gain}`, `hsla(${orb.hue}, 95%, 75%, 1)`, 22);
-              if (comboRef.current > 1) pushFloatingText(orb.x, orb.y - 36, `×${comboRef.current}`, 'rgba(180,255,220,0.95)', 16);
-              pushFlash('capture');
-              orb.dying = true; orb.destroyedBy = 'glass';
-              killed = true;
-            }
+        // Cull off-screen (below)
+        if (obj.y > H + 120) {
+          // Missed orb/crystal: small combo penalty for orbs only, none for bomb (good to dodge)
+          if (phase === 'playing' && obj.type === 'orb' && obj.age_ ? false : true) {
+            // Reset combo on missed orb (only if on screen long enough — i.e. user had a chance)
+            if (now - obj.spawnTime > 700) comboRef.current = 0;
           }
-          // Pinch destroys shadow orbs
-          if (orb.shadow) {
-            const handsList = [hand0, hand1].filter(Boolean) as Array<{ tip: any; pinch: number }>;
-            for (const h of handsList) {
-              if (h.pinch > PINCH_THRESHOLD) {
-                const d = Math.hypot(h.tip.x - orb.x, h.tip.y - orb.y);
-                if (d < orb.r + 18) {
-                  comboRef.current += 1;
-                  bestComboRef.current = Math.max(bestComboRef.current, comboRef.current);
-                  const gain = Math.round(POINTS_SHADOW * COMBO_MULT(comboRef.current - 1));
-                  scoreRef.current += gain;
-                  totalShattersRef.current += 1;
-                  burst(orb.x, orb.y, orb.hue, true, 24);
-                  pushFloatingText(orb.x, orb.y - 14, `+${gain}`, 'rgba(255,170,200,1)', 24);
-                  if (comboRef.current > 1) pushFloatingText(orb.x, orb.y - 38, `×${comboRef.current}`, 'rgba(255,200,220,0.95)', 16);
-                  pushFlash('shatter');
-                  orb.dying = true; orb.destroyedBy = 'pinch';
-                  killed = true;
+          continue;
+        }
+
+        // Slice detection (only during playing, only orbs and bombs sliceable)
+        if (phase === 'playing' && (obj.type === 'orb' || obj.type === 'bomb')) {
+          for (let i = 0; i < 2; i++) {
+            const h = hands[i];
+            const prev = handPrevRef.current[i];
+            if (h && prev) {
+              const dx = h.tip.x - prev.x;
+              const dy = h.tip.y - prev.y;
+              const speed = Math.hypot(dx, dy);
+              if (speed > SLICE_VELOCITY) {
+                if (segHitsCircle(prev, h.tip, obj.x, obj.y, obj.r)) {
+                  obj.sliced = true;
+                  obj.slicedAt = now;
+                  obj.sliceAngle = Math.atan2(dy, dx);
+                  // Two halves drift apart perpendicular to the cut
+                  const perp = obj.sliceAngle + Math.PI / 2;
+                  const sp = 0.18 + Math.random() * 0.1;
+                  obj.halves = [
+                    { ox: 0, oy: 0, vx: Math.cos(perp) * sp, vy: Math.sin(perp) * sp - 0.05, rot: 0, rotSpeed: 0.005 + Math.random() * 0.003 },
+                    { ox: 0, oy: 0, vx: -Math.cos(perp) * sp, vy: -Math.sin(perp) * sp - 0.05, rot: 0, rotSpeed: -(0.005 + Math.random() * 0.003) },
+                  ];
+                  if (obj.type === 'orb') {
+                    comboRef.current += 1;
+                    bestComboRef.current = Math.max(bestComboRef.current, comboRef.current);
+                    const gain = Math.round(POINTS_ORB * COMBO_MULT(comboRef.current - 1));
+                    scoreRef.current += gain;
+                    totalSlicedRef.current += 1;
+                    burst(obj.x, obj.y, obj.hue, 18, false);
+                    pushFloating(obj.x, obj.y - 14, `+${gain}`, `hsla(${obj.hue},95%,75%,1)`, 22);
+                    if (comboRef.current > 1) pushFloating(obj.x, obj.y - 38, `×${comboRef.current}`, 'rgba(180,255,220,0.95)', 16);
+                    pushFlash('slice');
+                  } else {
+                    // Bomb sliced — penalty
+                    comboRef.current = 0;
+                    scoreRef.current = Math.max(0, scoreRef.current + PENALTY_BOMB);
+                    totalBombsRef.current += 1;
+                    burst(obj.x, obj.y, 0, 30, true);
+                    pushFloating(obj.x, obj.y - 14, `${PENALTY_BOMB}`, 'rgba(255,90,120,1)', 24);
+                    pushFloating(obj.x, obj.y - 40, 'BOMB', 'rgba(255,140,160,1)', 14);
+                    pushFlash('bomb');
+                  }
                   break;
                 }
               }
             }
           }
-          // Penalty: shadow orbs hitting glass break the combo
-          if (orb.shadow && glassRect) {
-            const inside =
-              orb.x > glassRect.x &&
-              orb.x < glassRect.x + glassRect.w &&
-              orb.y > glassRect.y &&
-              orb.y < glassRect.y + glassRect.h;
-            if (inside) {
-              comboRef.current = 0;
-              burst(orb.x, orb.y, 0, true, 8);
-              pushFloatingText(orb.x, orb.y - 14, 'COMBO LOST', 'rgba(255,120,140,1)', 14);
-              pushFlash('penalty');
-              orb.dying = true; orb.destroyedBy = 'pinch';
-              killed = true;
+        }
+
+        // Crystal pinch absorption
+        if (phase === 'playing' && obj.type === 'crystal' && !obj.sliced) {
+          for (let i = 0; i < 2; i++) {
+            const h = hands[i];
+            if (h && h.pinch > PINCH_THRESHOLD) {
+              const d = Math.hypot(h.tip.x - obj.x, h.tip.y - obj.y);
+              if (d < obj.r + 22) {
+                obj.sliced = true;
+                obj.slicedAt = now;
+                obj.caught = true;
+                obj.halves = [];
+                comboRef.current += 1;
+                bestComboRef.current = Math.max(bestComboRef.current, comboRef.current);
+                const gain = Math.round(POINTS_CRYSTAL * COMBO_MULT(comboRef.current - 1));
+                scoreRef.current += gain;
+                totalCrystalsRef.current += 1;
+                burst(obj.x, obj.y, 48, 26, false);
+                pushFloating(obj.x, obj.y - 14, `+${gain}`, 'rgba(255,220,140,1)', 26);
+                pushFloating(obj.x, obj.y - 42, 'CRYSTAL', 'rgba(255,230,170,0.95)', 13);
+                if (comboRef.current > 1) pushFloating(obj.x, obj.y - 64, `×${comboRef.current}`, 'rgba(255,210,170,0.95)', 16);
+                pushFlash('crystal');
+                break;
+              }
             }
-          }
-          // Orb expires after 14s (resets combo only if visible)
-          if (!killed && orb.age > 14_000) {
-            if (!orb.shadow) comboRef.current = 0;
-            orb.dying = true;
           }
         }
 
-        if (!killed) surviving.push(orb);
+        surviving.push(obj);
       }
-      orbsRef.current = surviving;
+      objectsRef.current = surviving;
 
-      // ── Update particles ──
+      // ── Particles ──
       particlesRef.current = particlesRef.current.filter(p => {
         p.x += p.vx; p.y += p.vy;
         p.vy += 0.03;
@@ -403,14 +454,42 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
 
       // ── DRAW ──
 
-      // Particles (under everything)
+      // Trails — glowing glass ribbons
+      for (let handIdx = 0; handIdx < 2; handIdx++) {
+        const pts = trailsRef.current.filter(p => p.hand === handIdx);
+        if (pts.length < 2) continue;
+        for (let pass = 0; pass < 2; pass++) {
+          ctx.save();
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.shadowColor = 'rgba(180,220,255,0.95)';
+          ctx.shadowBlur = pass === 0 ? 22 : 6;
+          for (let i = 1; i < pts.length; i++) {
+            const a = pts[i - 1];
+            const b = pts[i];
+            const age = (now - b.t) / TRAIL_LIFETIME;
+            const alpha = Math.max(0, 1 - age);
+            ctx.strokeStyle = pass === 0
+              ? `rgba(180,220,255,${alpha * 0.55})`
+              : `rgba(255,255,255,${alpha * 0.95})`;
+            ctx.lineWidth = pass === 0 ? 14 * alpha + 2 : 2.5;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+      }
+
+      // Particles
       for (const p of particlesRef.current) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.life);
-        ctx.fillStyle = p.shadow
-          ? `rgba(255,${100 + 80 * p.life},${180 + 60 * p.life},${p.life})`
+        ctx.fillStyle = p.bomb
+          ? `rgba(255,${100 + 80 * p.life},${110 + 60 * p.life},${p.life})`
           : `hsla(${p.hue}, 90%, ${65 + 15 * p.life}%, ${p.life})`;
-        ctx.shadowColor = p.shadow ? 'rgba(255,80,140,0.9)' : `hsla(${p.hue}, 100%, 70%, 0.9)`;
+        ctx.shadowColor = p.bomb ? 'rgba(255,80,100,0.9)' : `hsla(${p.hue}, 100%, 70%, 0.9)`;
         ctx.shadowBlur = 8;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -418,86 +497,147 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         ctx.restore();
       }
 
-      // Orbs
-      for (const orb of orbsRef.current) {
-        const a = orb.dying ? 1 - orb.dyingT : Math.min(1, orb.age / 200);
-        const scale = orb.dying ? 1 + orb.dyingT * 0.5 : 1;
-        const r = orb.r * scale;
+      // Objects
+      for (const obj of objectsRef.current) {
+        if (obj.sliced) {
+          // Two halves flying apart
+          const lifeT = (now - obj.slicedAt) / 800;
+          const alpha = Math.max(0, 1 - lifeT);
+          if (obj.caught) {
+            // Crystal: simple shrink-collapse
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            const r = obj.r * (1 + lifeT * 0.6);
+            ctx.shadowColor = 'rgba(255,220,140,0.95)';
+            ctx.shadowBlur = 30;
+            ctx.fillStyle = `rgba(255,230,170,${alpha * 0.7})`;
+            ctx.beginPath(); ctx.arc(obj.x, obj.y, r, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+          } else {
+            for (let h = 0; h < obj.halves.length; h++) {
+              const half = obj.halves[h];
+              const cx = obj.x + half.ox;
+              const cy = obj.y + half.oy;
+              const r = obj.r;
+              ctx.save();
+              ctx.globalAlpha = alpha;
+              ctx.translate(cx, cy);
+              ctx.rotate(obj.sliceAngle + half.rot);
+              const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+              if (obj.type === 'bomb') {
+                ctx.shadowColor = 'rgba(255,90,90,0.9)';
+                ctx.shadowBlur = 24;
+                grad.addColorStop(0, 'rgba(255,160,160,0.85)');
+                grad.addColorStop(0.6, 'rgba(180,30,40,0.55)');
+                grad.addColorStop(1, 'rgba(60,0,0,0)');
+              } else {
+                ctx.shadowColor = `hsla(${obj.hue},100%,70%,0.9)`;
+                ctx.shadowBlur = 22;
+                grad.addColorStop(0, `hsla(${obj.hue},95%,85%,0.9)`);
+                grad.addColorStop(0.55, `hsla(${obj.hue},90%,60%,0.55)`);
+                grad.addColorStop(1, `hsla(${obj.hue},80%,40%,0)`);
+              }
+              ctx.fillStyle = grad;
+              // Half-circle
+              ctx.beginPath();
+              if (h === 0) ctx.arc(0, 0, r, 0, Math.PI);
+              else ctx.arc(0, 0, r, Math.PI, Math.PI * 2);
+              ctx.closePath();
+              ctx.fill();
+              // Cut edge highlight
+              ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.7})`;
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.moveTo(-r, 0); ctx.lineTo(r, 0);
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
+          continue;
+        }
+
+        // Whole object
+        const ageIn = Math.min(1, (now - obj.spawnTime) / 220);
         ctx.save();
-        ctx.globalAlpha = a;
-        if (orb.shadow) {
-          ctx.shadowColor = 'rgba(255,80,140,0.9)';
-          ctx.shadowBlur = 30;
-          // Outer pulse ring
-          const pulse = 0.5 + 0.5 * Math.sin(orb.age / 150);
-          ctx.strokeStyle = `rgba(255,80,140,${0.4 + pulse * 0.4})`;
-          ctx.lineWidth = 1.5;
+        ctx.globalAlpha = ageIn;
+        ctx.translate(obj.x, obj.y);
+        ctx.rotate(obj.rot);
+
+        if (obj.type === 'bomb') {
+          // Pulsing red bomb with spikes
+          const pulse = 0.5 + 0.5 * Math.sin((now - obj.spawnTime) / 140);
+          ctx.shadowColor = 'rgba(255,80,100,0.95)';
+          ctx.shadowBlur = 30 + pulse * 20;
+          // Outer halo
+          ctx.strokeStyle = `rgba(255,80,100,${0.4 + pulse * 0.4})`;
+          ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.arc(orb.x, orb.y, r + 6 + pulse * 6, 0, Math.PI * 2);
+          ctx.arc(0, 0, obj.r + 6 + pulse * 8, 0, Math.PI * 2);
           ctx.stroke();
           // Body
-          const grad = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, r);
-          grad.addColorStop(0, 'rgba(255,180,210,0.85)');
-          grad.addColorStop(0.6, 'rgba(180,40,100,0.55)');
-          grad.addColorStop(1, 'rgba(60,0,30,0)');
+          const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, obj.r);
+          grad.addColorStop(0, 'rgba(255,180,180,0.95)');
+          grad.addColorStop(0.55, 'rgba(220,40,60,0.7)');
+          grad.addColorStop(1, 'rgba(60,0,0,0)');
           ctx.fillStyle = grad;
-          ctx.beginPath(); ctx.arc(orb.x, orb.y, r, 0, Math.PI * 2); ctx.fill();
-        } else {
-          ctx.shadowColor = `hsla(${orb.hue}, 100%, 70%, 0.9)`;
-          ctx.shadowBlur = 26;
-          // Capture progress ring
-          if (orb.inGlassFor > 0) {
-            ctx.strokeStyle = `rgba(255,255,255,${0.6})`;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(orb.x, orb.y, r + 5, -Math.PI / 2, -Math.PI / 2 + (orb.inGlassFor / CAPTURE_THRESHOLD_MS) * Math.PI * 2);
-            ctx.stroke();
-          }
-          // Body
-          const grad = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, r);
-          grad.addColorStop(0, `hsla(${orb.hue}, 95%, 85%, 0.9)`);
-          grad.addColorStop(0.55, `hsla(${orb.hue}, 90%, 60%, 0.55)`);
-          grad.addColorStop(1, `hsla(${orb.hue}, 80%, 40%, 0)`);
-          ctx.fillStyle = grad;
-          ctx.beginPath(); ctx.arc(orb.x, orb.y, r, 0, Math.PI * 2); ctx.fill();
-          // Highlight
-          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          ctx.beginPath(); ctx.arc(0, 0, obj.r, 0, Math.PI * 2); ctx.fill();
+          // Warning ✕
+          ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+          ctx.lineWidth = 2.5;
+          const k = obj.r * 0.45;
           ctx.beginPath();
-          ctx.arc(orb.x - r * 0.32, orb.y - r * 0.34, r * 0.18, 0, Math.PI * 2);
+          ctx.moveTo(-k, -k); ctx.lineTo(k, k);
+          ctx.moveTo(k, -k); ctx.lineTo(-k, k);
+          ctx.stroke();
+        } else if (obj.type === 'crystal') {
+          // Golden faceted gem (rotating diamond polygon)
+          const pulse = 0.5 + 0.5 * Math.sin((now - obj.spawnTime) / 200);
+          ctx.shadowColor = 'rgba(255,220,140,0.95)';
+          ctx.shadowBlur = 30 + pulse * 14;
+          // Outer ring (signals "needs pinch")
+          ctx.strokeStyle = `rgba(255,220,140,${0.55 + pulse * 0.35})`;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.arc(0, 0, obj.r + 10, 0, Math.PI * 2); ctx.stroke();
+          ctx.setLineDash([]);
+          // Diamond
+          const grad = ctx.createLinearGradient(0, -obj.r, 0, obj.r);
+          grad.addColorStop(0, 'rgba(255,255,210,0.95)');
+          grad.addColorStop(0.5, 'rgba(255,200,90,0.85)');
+          grad.addColorStop(1, 'rgba(180,120,40,0.6)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.moveTo(0, -obj.r);
+          ctx.lineTo(obj.r * 0.7, 0);
+          ctx.lineTo(0, obj.r);
+          ctx.lineTo(-obj.r * 0.7, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,240,200,0.9)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        } else {
+          // Standard glass orb
+          ctx.shadowColor = `hsla(${obj.hue},100%,70%,0.9)`;
+          ctx.shadowBlur = 26;
+          const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, obj.r);
+          grad.addColorStop(0, `hsla(${obj.hue},95%,85%,0.92)`);
+          grad.addColorStop(0.55, `hsla(${obj.hue},90%,60%,0.6)`);
+          grad.addColorStop(1, `hsla(${obj.hue},80%,40%,0)`);
+          ctx.fillStyle = grad;
+          ctx.beginPath(); ctx.arc(0, 0, obj.r, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.beginPath();
+          ctx.arc(-obj.r * 0.32, -obj.r * 0.34, obj.r * 0.18, 0, Math.PI * 2);
           ctx.fill();
         }
-        ctx.restore();
-      }
 
-      // Glass rectangle
-      if (glassRect) {
-        const { x, y, w, h } = glassRect;
-        ctx.save();
-        ctx.fillStyle = 'rgba(255,255,255,0.06)';
-        ctx.fillRect(x, y, w, h);
-        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-        ctx.lineWidth = 1;
-        ctx.shadowColor = 'rgba(255,255,255,0.4)';
-        ctx.shadowBlur = 14;
-        ctx.strokeRect(x, y, w, h);
-        ctx.restore();
-
-        const cs = 16;
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-        ctx.lineWidth = 2;
-        [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]].forEach(([cx, cy, sx, sy]) => {
-          ctx.beginPath();
-          ctx.moveTo(cx + sx * cs, cy);
-          ctx.lineTo(cx, cy);
-          ctx.lineTo(cx, cy + sy * cs);
-          ctx.stroke();
-        });
         ctx.restore();
       }
 
       // Hand markers
-      for (const h of [hand0, hand1]) {
+      for (let i = 0; i < 2; i++) {
+        const h = hands[i];
         if (!h) continue;
         ctx.save();
         ctx.fillStyle = 'rgba(255,255,255,0.95)';
@@ -507,16 +647,16 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         ctx.arc(h.tip.x, h.tip.y, 5 + h.pinch * 4, 0, Math.PI * 2);
         ctx.fill();
         if (h.pinch > PINCH_THRESHOLD) {
-          ctx.strokeStyle = 'rgba(255,160,200,0.9)';
+          ctx.strokeStyle = 'rgba(255,220,140,0.95)';
           ctx.lineWidth = 1.5;
           ctx.beginPath();
-          ctx.arc(h.tip.x, h.tip.y, 18, 0, Math.PI * 2);
+          ctx.arc(h.tip.x, h.tip.y, 22, 0, Math.PI * 2);
           ctx.stroke();
         }
         ctx.restore();
       }
 
-      // Floating "+points" / "×combo" texts
+      // Floating texts
       floatTextsRef.current = floatTextsRef.current.filter(ft => {
         ft.life -= dt / 900;
         ft.y -= dt * 0.06;
@@ -534,19 +674,16 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         ctx.restore();
       }
 
-      // Edge flashes (capture/shatter/penalty)
-      flashesRef.current = flashesRef.current.filter(f => {
-        f.t += dt / 350;
-        return f.t < 1;
-      });
+      // Edge flashes
+      flashesRef.current = flashesRef.current.filter(f => { f.t += dt / 350; return f.t < 1; });
       for (const f of flashesRef.current) {
         const alpha = (1 - f.t) * 0.4;
         const grad = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.7);
-        const color = f.kind === 'capture'
-          ? `rgba(120,255,180,${alpha})`
-          : f.kind === 'shatter'
-          ? `rgba(255,140,200,${alpha})`
-          : `rgba(255,80,80,${alpha})`;
+        const color = f.kind === 'slice'
+          ? `rgba(180,220,255,${alpha})`
+          : f.kind === 'crystal'
+          ? `rgba(255,220,140,${alpha})`
+          : `rgba(255,80,100,${alpha + 0.15})`;
         grad.addColorStop(0, 'rgba(0,0,0,0)');
         grad.addColorStop(1, color);
         ctx.save();
@@ -555,37 +692,36 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         ctx.restore();
       }
 
-      // Combo glow on screen edges (only when combo >= 3 and playing)
+      // Combo glow when ≥3
       if (phase === 'playing' && comboRef.current >= 3) {
         const intensity = Math.min(1, (comboRef.current - 2) / 8);
         const pulse = 0.5 + 0.5 * Math.sin(now / 280);
         const a = (0.08 + 0.18 * intensity) * (0.7 + 0.3 * pulse);
         const grad = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.4, W / 2, H / 2, Math.max(W, H) * 0.7);
         grad.addColorStop(0, 'rgba(0,0,0,0)');
-        grad.addColorStop(1, `rgba(180,255,220,${a})`);
-        ctx.save();
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        ctx.restore();
+        grad.addColorStop(1, `rgba(180,220,255,${a})`);
+        ctx.save(); ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H); ctx.restore();
       }
 
-      // Vignette (always on, very subtle)
+      // Vignette
       const vGrad = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.85);
       vGrad.addColorStop(0, 'rgba(0,0,0,0)');
       vGrad.addColorStop(1, 'rgba(0,0,0,0.55)');
-      ctx.save();
-      ctx.fillStyle = vGrad;
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
+      ctx.save(); ctx.fillStyle = vGrad; ctx.fillRect(0, 0, W, H); ctx.restore();
 
-      // Tween display score toward actual score (count-up effect)
+      // Tween display score
       displayScoreRef.current += (scoreRef.current - displayScoreRef.current) * Math.min(1, dt / 220);
+
+      // Capture hand positions for next frame's slice detection
+      handPrevRef.current = [
+        hands[0] ? { x: hands[0].tip.x, y: hands[0].tip.y } : null,
+        hands[1] ? { x: hands[1].tip.x, y: hands[1].tip.y } : null,
+      ];
 
       rafId = requestAnimationFrame(draw);
     };
     rafId = requestAnimationFrame(draw);
 
-    // UI tick at 10Hz so React HUD stays in sync with the refs
     const ui = setInterval(() => setUiTick(n => n + 1), 100);
 
     return () => {
@@ -595,7 +731,6 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
     };
   }, []);
 
-  // ── ESC to exit ──
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onExit(); };
     window.addEventListener('keydown', onKey);
@@ -615,47 +750,45 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
   const displayScore = Math.round(displayScoreRef.current);
   const combo = comboRef.current;
   const bestCombo = bestComboRef.current;
-  const captures = totalCapturesRef.current;
-  const shatters = totalShattersRef.current;
+  const sliced = totalSlicedRef.current;
+  const crystals = totalCrystalsRef.current;
+  const bombs = totalBombsRef.current;
 
   const grade =
     score >= 1500 ? { letter: 'S', tag: 'LEGENDARY', color: 'rgba(255,220,140,1)' }
     : score >= 1000 ? { letter: 'A', tag: 'EXCELLENT', color: 'rgba(180,255,220,1)' }
     : score >= 650 ? { letter: 'B', tag: 'NICE', color: 'rgba(180,200,255,1)' }
-    : score >= 350 ? { letter: 'C', tag: 'OK', color: 'rgba(255,255,255,0.8)' }
+    : score >= 300 ? { letter: 'C', tag: 'OK', color: 'rgba(255,255,255,0.85)' }
     : { letter: 'D', tag: 'KEEP TRYING', color: 'rgba(255,180,180,0.85)' };
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
-    <div className="fixed inset-0 overflow-hidden z-[9999]" style={{ background: 'linear-gradient(135deg, #0a0a12 0%, #0e0e18 50%, #0a0a12 100%)' }}>
+    <div className="fixed inset-0 overflow-hidden z-[9999]" style={{ background: 'linear-gradient(135deg, #08080f 0%, #0e0e1a 50%, #08080f 100%)' }}>
       {/* Backdrop blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div style={{ position: 'absolute', top: '5%', left: '2%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(130,130,255,0.32), transparent 70%)', filter: 'blur(55px)' }} />
-        <div style={{ position: 'absolute', bottom: '4%', right: '4%', width: 440, height: 440, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,100,140,0.28), transparent 70%)', filter: 'blur(65px)' }} />
-        <div style={{ position: 'absolute', top: '40%', right: '10%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(80,255,200,0.24), transparent 70%)', filter: 'blur(50px)' }} />
+        <div style={{ position: 'absolute', top: '5%', left: '2%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(120,160,255,0.32), transparent 70%)', filter: 'blur(55px)' }} />
+        <div style={{ position: 'absolute', bottom: '4%', right: '4%', width: 440, height: 440, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,140,180,0.26), transparent 70%)', filter: 'blur(65px)' }} />
+        <div style={{ position: 'absolute', top: '40%', right: '10%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(80,255,200,0.22), transparent 70%)', filter: 'blur(50px)' }} />
       </div>
 
-      {/* Subtle grid */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.06 }}>
         <defs>
-          <pattern id="sg" width="48" height="48" patternUnits="userSpaceOnUse">
+          <pattern id="sg2" width="48" height="48" patternUnits="userSpaceOnUse">
             <path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" strokeWidth="0.6" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#sg)" />
+        <rect width="100%" height="100%" fill="url(#sg2)" />
       </svg>
 
-      {/* Camera (mirrored, behind canvas) */}
-      <div className="absolute" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 560, height: 420, opacity: 0.18 }}>
+      <div className="absolute" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 560, height: 420, opacity: 0.16 }}>
         <video ref={videoRef} className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)', display: 'block' }} muted playsInline autoPlay />
       </div>
 
-      {/* Game canvas overlay */}
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
 
-      {/* ── HUD: top-left score panel ── */}
+      {/* HUD: Score / Combo */}
       <div className="absolute" style={{ top: 24, left: 28, display: 'flex', flexDirection: 'column', gap: 8, width: 200 }}>
         <button
           onClick={onExit}
@@ -664,10 +797,9 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
             background: 'rgba(255,255,255,0.08)',
             border: '1px solid rgba(255,255,255,0.22)',
             backdropFilter: 'blur(12px)',
-            borderRadius: 6,
-            padding: '8px 14px',
-            color: 'rgba(255,255,255,0.85)',
-            fontSize: 10, letterSpacing: '0.3em', textTransform: 'uppercase',
+            borderRadius: 6, padding: '8px 14px',
+            color: 'rgba(255,255,255,0.85)', fontSize: 10,
+            letterSpacing: '0.3em', textTransform: 'uppercase',
             cursor: 'pointer', transition: 'all 0.3s',
             opacity: showExit ? 1 : 0,
             pointerEvents: showExit ? 'auto' : 'none',
@@ -685,7 +817,7 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
           <div style={{ marginTop: 12, height: 1, background: 'rgba(255,255,255,0.1)' }} />
           <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>
             <span>COMBO</span>
-            <span style={{ color: combo > 0 ? 'rgba(120,255,180,0.95)' : 'rgba(255,255,255,0.45)' }}>×{combo}</span>
+            <span style={{ color: combo > 0 ? 'rgba(180,220,255,0.95)' : 'rgba(255,255,255,0.45)' }}>×{combo}</span>
           </div>
           <div style={{ marginTop: 4, display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>
             <span>BEST</span>
@@ -694,18 +826,18 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         </div>
       </div>
 
-      {/* ── HUD: top-right title + timer ── */}
-      <div className="absolute" style={{ top: 24, right: 28, display: 'flex', flexDirection: 'column', gap: 8, width: 220 }}>
+      {/* HUD: Title + Timer + How */}
+      <div className="absolute" style={{ top: 24, right: 28, display: 'flex', flexDirection: 'column', gap: 8, width: 232 }}>
         <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', borderRadius: 8, padding: '14px 16px' }}>
           <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: 4, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>TOOLBOX /// SECRET</div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: 'rgba(255,255,255,0.92)', fontFamily: "'Pretendard Variable', Pretendard, sans-serif", letterSpacing: '-0.04em' }}>GLASS HUNT</div>
+          <div style={{ fontSize: 18, fontWeight: 900, color: 'rgba(255,255,255,0.94)', fontFamily: "'Pretendard Variable', Pretendard, sans-serif", letterSpacing: '-0.04em' }}>GLASS BLADE</div>
           <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em', marginTop: 2, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>{timeStr}</div>
         </div>
 
         {phase === 'playing' && (
           <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', borderRadius: 8, padding: '14px 16px' }}>
             <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: 6, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>TIME LEFT</div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: timeLeft < 10000 ? 'rgba(255,140,140,0.95)' : 'rgba(255,255,255,0.95)', fontFamily: "'Pretendard Variable', Pretendard, sans-serif", letterSpacing: '-0.02em', lineHeight: 1 }}>
+            <div style={{ fontSize: 28, fontWeight: 900, color: timeLeft < 10000 ? 'rgba(255,140,140,0.95)' : 'rgba(255,255,255,0.95)', fontFamily: "'Pretendard Variable', Pretendard, sans-serif", letterSpacing: '-0.02em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
               {(timeLeft / 1000).toFixed(1)}s
             </div>
             <div style={{ marginTop: 8, height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
@@ -714,7 +846,7 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
                 width: `${(timeLeft / GAME_DURATION) * 100}%`,
                 background: timeLeft < 10000
                   ? 'linear-gradient(90deg, rgba(255,80,80,0.9), rgba(255,160,160,0.9))'
-                  : 'linear-gradient(90deg, rgba(120,255,180,0.9), rgba(180,200,255,0.9))',
+                  : 'linear-gradient(90deg, rgba(180,220,255,0.95), rgba(220,200,255,0.95))',
                 transition: 'width 0.1s linear',
               }} />
             </div>
@@ -723,30 +855,30 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
 
         <div className="pointer-events-none" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', borderRadius: 8, padding: '12px 14px' }}>
           <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 8, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>HOW TO PLAY</div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, letterSpacing: '0.05em', fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>
-            <span style={{ color: 'rgba(180,255,210,0.9)' }}>● ORB</span> · 두 손 검지로 글라스 만들어 가두기<br />
-            <span style={{ color: 'rgba(255,140,180,0.9)' }}>● SHADOW</span> · 엄지·검지 핀치로 부수기<br />
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>※ 그림자가 글라스에 닿으면 콤보 리셋</span>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, letterSpacing: '0.05em', fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>
+            <span style={{ color: 'rgba(180,220,255,0.95)' }}>● ORB</span> · 손끝으로 빠르게 베기 (+10)<br />
+            <span style={{ color: 'rgba(255,220,140,0.95)' }}>◆ CRYSTAL</span> · 손가락 핀치로 흡수 (+50)<br />
+            <span style={{ color: 'rgba(255,120,140,0.95)' }}>✕ BOMB</span> · 절대 베지 마세요 (-50)
           </div>
         </div>
       </div>
 
-      {/* ── Phase overlays ── */}
       {phase === 'intro' && (
-        <div className="absolute pointer-events-none" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', width: '90%', maxWidth: 520 }}>
+        <div className="absolute pointer-events-none" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', width: '90%', maxWidth: 540 }}>
           <div style={{
-            background: 'rgba(20,20,30,0.55)',
+            background: 'rgba(15,15,24,0.6)',
             border: '1px solid rgba(255,255,255,0.18)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: 16,
-            padding: '36px 40px',
+            backdropFilter: 'blur(22px)',
+            borderRadius: 18,
+            padding: '38px 44px',
             boxShadow: '0 30px 80px rgba(0,0,0,0.5)',
           }}>
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.5em', textTransform: 'uppercase', marginBottom: 14, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>READY</div>
-            <h1 style={{ fontSize: 56, fontWeight: 900, color: 'white', letterSpacing: '-0.05em', lineHeight: 1, marginBottom: 14, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>GLASS HUNT</h1>
+            <h1 style={{ fontSize: 60, fontWeight: 900, color: 'white', letterSpacing: '-0.05em', lineHeight: 1, marginBottom: 14, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>GLASS BLADE</h1>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.05em', lineHeight: 1.7, marginBottom: 22, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>
-              60초 안에 떠다니는 오브를 가두고 부수세요.<br />
-              두 손을 카메라 앞에 들면 시작합니다.
+              검지 손가락이 글래스 칼날이 됩니다.<br />
+              날아오는 오브를 빠르게 가르고, 폭탄은 피하세요.<br />
+              한 손이라도 카메라에 보이면 시작합니다.
             </div>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 10,
@@ -755,15 +887,13 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
               border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: 999,
               fontSize: 10,
-              color: lms_count(landmarksRef.current) === 2 ? 'rgba(120,255,180,0.95)' : 'rgba(255,255,255,0.55)',
+              color: lms_count(landmarksRef.current) >= 1 ? 'rgba(180,220,255,0.95)' : 'rgba(255,255,255,0.55)',
               letterSpacing: '0.3em', textTransform: 'uppercase',
               fontFamily: "'Pretendard Variable', Pretendard, sans-serif",
             }}>
-              {status === 'loading'
-                ? 'INITIALIZING CAMERA…'
-                : status === 'error'
-                ? 'CAMERA ERROR'
-                : `HANDS DETECTED · ${lms_count(landmarksRef.current)}/2`}
+              {status === 'loading' ? 'INITIALIZING CAMERA…'
+                : status === 'error' ? 'CAMERA ERROR'
+                : `HAND DETECTED · ${lms_count(landmarksRef.current)}/2`}
             </div>
           </div>
         </div>
@@ -775,16 +905,13 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
             key={countdownRef.current}
             style={{
               fontSize: countdownRef.current > 0 ? 220 : 140,
-              fontWeight: 900,
-              color: 'white',
-              letterSpacing: '-0.05em',
-              textShadow: '0 0 80px rgba(255,255,255,0.7), 0 0 160px rgba(180,200,255,0.3)',
-              fontFamily: "'Pretendard Variable', Pretendard, sans-serif",
-              lineHeight: 1,
+              fontWeight: 900, color: 'white', letterSpacing: '-0.05em',
+              textShadow: '0 0 80px rgba(255,255,255,0.7), 0 0 160px rgba(180,220,255,0.3)',
+              fontFamily: "'Pretendard Variable', Pretendard, sans-serif", lineHeight: 1,
               animation: 'cdpop 1s ease-out',
             }}
           >
-            {countdownRef.current > 0 ? countdownRef.current : 'GO'}
+            {countdownRef.current > 0 ? countdownRef.current : 'SLICE!'}
           </div>
           <style>{`
             @keyframes cdpop {
@@ -808,73 +935,40 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
             boxShadow: '0 30px 100px rgba(0,0,0,0.6), 0 0 80px rgba(120,160,255,0.05) inset',
           }}>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.5em', textTransform: 'uppercase', marginBottom: 6, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>TIME UP — RESULT</div>
-
-            {/* Grade */}
             <div style={{
-              display: 'inline-block',
-              padding: '4px 28px',
-              fontSize: 140,
-              fontWeight: 900,
-              color: grade.color,
+              display: 'inline-block', padding: '4px 28px',
+              fontSize: 140, fontWeight: 900, color: grade.color,
               fontFamily: "'Pretendard Variable', Pretendard, sans-serif",
-              lineHeight: 1,
-              letterSpacing: '-0.06em',
+              lineHeight: 1, letterSpacing: '-0.06em',
               textShadow: `0 0 60px ${grade.color}`,
-              marginTop: 4,
-              marginBottom: 4,
+              marginTop: 4, marginBottom: 4,
             }}>{grade.letter}</div>
             <div style={{ fontSize: 11, color: grade.color, letterSpacing: '0.45em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 22, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>{grade.tag}</div>
 
-            {/* Stat row */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 28, paddingTop: 18, paddingBottom: 18, borderTop: '1px solid rgba(255,255,255,0.1)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
               <Stat label="SCORE" value={score.toLocaleString()} highlight />
               <Stat label="BEST COMBO" value={`×${bestCombo}`} />
-              <Stat label="CAPTURED" value={`${captures} · ${shatters}`} sub="orb · shadow" />
+              <Stat label="SLICED · CRYSTAL · BOMB" value={`${sliced} · ${crystals} · ${bombs}`} />
             </div>
 
-            <button
-              onClick={handleRetry}
-              style={{
-                background: 'rgba(255,255,255,0.96)',
-                color: '#000',
-                border: 'none',
-                borderRadius: 999,
-                padding: '14px 38px',
-                fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: '0.4em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                fontFamily: "'Pretendard Variable', Pretendard, sans-serif",
-                marginRight: 10,
-                boxShadow: '0 8px 30px rgba(255,255,255,0.15)',
-              }}
-            >
-              ↺ Retry
-            </button>
-            <button
-              onClick={onExit}
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                color: 'rgba(255,255,255,0.75)',
-                border: '1px solid rgba(255,255,255,0.22)',
-                borderRadius: 999,
-                padding: '14px 28px',
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.4em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                fontFamily: "'Pretendard Variable', Pretendard, sans-serif",
-              }}
-            >
-              Exit
-            </button>
+            <button onClick={handleRetry} style={{
+              background: 'rgba(255,255,255,0.96)', color: '#000',
+              border: 'none', borderRadius: 999, padding: '14px 38px',
+              fontSize: 11, fontWeight: 800, letterSpacing: '0.4em', textTransform: 'uppercase',
+              cursor: 'pointer', fontFamily: "'Pretendard Variable', Pretendard, sans-serif",
+              marginRight: 10, boxShadow: '0 8px 30px rgba(255,255,255,0.15)',
+            }}>↺ Retry</button>
+            <button onClick={onExit} style={{
+              background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.75)',
+              border: '1px solid rgba(255,255,255,0.22)', borderRadius: 999,
+              padding: '14px 28px', fontSize: 11, fontWeight: 700,
+              letterSpacing: '0.4em', textTransform: 'uppercase',
+              cursor: 'pointer', fontFamily: "'Pretendard Variable', Pretendard, sans-serif",
+            }}>Exit</button>
           </div>
         </div>
       )}
 
-      {/* Bottom hint */}
       {phase === 'playing' && (
         <div className="absolute pointer-events-none" style={{ bottom: 24, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
           <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', borderRadius: 999, padding: '8px 22px', color: 'rgba(255,255,255,0.55)', fontSize: 9, letterSpacing: '0.3em', textTransform: 'uppercase', fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>
@@ -888,20 +982,15 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
 
 const lms_count = (lms: any[]) => Math.min(2, lms.length);
 
-const Stat = ({ label, value, sub, highlight = false }: { label: string; value: string; sub?: string; highlight?: boolean }) => (
+const Stat = ({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) => (
   <div style={{ textAlign: 'center' }}>
     <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 6, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>{label}</div>
     <div style={{
-      fontSize: highlight ? 26 : 20,
+      fontSize: highlight ? 26 : 18,
       fontWeight: 900,
       color: highlight ? 'white' : 'rgba(255,255,255,0.9)',
       fontFamily: "'Pretendard Variable', Pretendard, sans-serif",
-      letterSpacing: '-0.02em',
-      lineHeight: 1,
-      fontVariantNumeric: 'tabular-nums',
+      letterSpacing: '-0.02em', lineHeight: 1, fontVariantNumeric: 'tabular-nums',
     }}>{value}</div>
-    {sub && (
-      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 4, fontFamily: "'Pretendard Variable', Pretendard, sans-serif" }}>{sub}</div>
-    )}
   </div>
 );
