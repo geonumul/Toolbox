@@ -51,11 +51,11 @@ function AuthorMultiSelect({ value, teamData, onChange }: {
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">
-        Authors {selected.length > 0 && <span className="text-gray-700">({selected.length})</span>}
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-3">
+        Authors {selected.length > 0 && <span className="text-gray-700 normal-case">· {selected.length} selected</span>}
       </div>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {options.map(name => {
           const active = selected.includes(name);
           return (
@@ -63,10 +63,10 @@ function AuthorMultiSelect({ value, teamData, onChange }: {
               key={name}
               type="button"
               onClick={() => toggle(name)}
-              className={`px-2.5 py-1 text-[11px] leading-none rounded-full font-mono whitespace-nowrap transition-all ${
+              className={`inline-flex items-center px-3.5 py-1.5 text-xs leading-none rounded-full font-medium whitespace-nowrap transition-all ${
                 active
-                  ? 'bg-black text-white shadow-sm'
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                  ? 'bg-black text-white shadow-sm border border-black'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 hover:border-gray-300'
               }`}
             >
               {name}
@@ -631,15 +631,15 @@ function ThumbnailStrip({
   };
 
   return (
-    <div className="flex-shrink-0 bg-black/95 border-t border-white/10 px-3 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-white/70 whitespace-nowrap flex items-center gap-1 mr-1">
-          <ImageIcon size={11} /> {imageList.length}/{MAX_IMAGES}
+    <div className="flex-shrink-0 bg-black/55 backdrop-blur-md border-t border-white/15 px-4 py-3">
+      <div className="flex items-center gap-3">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-white/80 whitespace-nowrap flex items-center gap-1 mr-1">
+          <ImageIcon size={12} /> {imageList.length}/{MAX_IMAGES}
         </span>
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 flex-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 flex-1">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={imageList.map((_, i) => i)} strategy={horizontalListSortingStrategy}>
-              <div className="flex gap-1.5">
+              <div className="flex gap-2">
                 {imageList.map((img, i) => (
                   <SortableThumbnail
                     key={`${img}-${i}`}
@@ -655,20 +655,20 @@ function ThumbnailStrip({
           </DndContext>
 
           {isUploading ? (
-            <div className="flex-shrink-0 w-9 h-9 rounded-md border border-white/30 flex flex-col items-center justify-center gap-0.5 bg-black/50">
-              <div className="w-6 bg-white/20 rounded-full h-0.5">
-                <div className="bg-white h-0.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+            <div className="flex-shrink-0 w-16 h-16 rounded-md border border-white/30 flex flex-col items-center justify-center gap-1 bg-black/50">
+              <div className="w-10 bg-white/20 rounded-full h-1">
+                <div className="bg-white h-1 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
               </div>
-              <span className="text-[7px] text-white font-bold">
+              <span className="text-[9px] text-white font-bold">
                 {uploadCount.total > 1 ? `${uploadCount.current}/${uploadCount.total}` : `${uploadProgress}%`}
               </span>
             </div>
           ) : imageList.length < MAX_IMAGES ? (
             <label
-              className="flex-shrink-0 w-9 h-9 rounded-md border-2 border-dashed border-white/40 flex items-center justify-center cursor-pointer hover:border-white hover:bg-white/5 text-white/70 hover:text-white transition"
+              className="flex-shrink-0 w-16 h-16 rounded-md border-2 border-dashed border-white/40 flex items-center justify-center cursor-pointer hover:border-white hover:bg-white/10 text-white/70 hover:text-white transition"
               title="이미지 추가"
             >
-              <Plus size={14} />
+              <Plus size={20} />
               <input type="file" accept="image/*" multiple className="hidden" onChange={onPick} />
             </label>
           ) : null}
@@ -702,8 +702,8 @@ function SortableThumbnail({ index, src, active, onSelect, onRemove }: SortableT
       {...attributes}
       {...listeners}
       onClick={onSelect}
-      className={`relative flex-shrink-0 w-9 h-9 rounded-md overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all touch-none ${
-        active ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
+      className={`relative flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all touch-none ${
+        active ? 'border-white shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'
       }`}
     >
       <img
@@ -716,10 +716,10 @@ function SortableThumbnail({ index, src, active, onSelect, onRemove }: SortableT
       <button
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => { e.stopPropagation(); onRemove(); }}
-        className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-0.5 rounded-bl"
+        className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-1 rounded-bl"
         aria-label="Remove image"
       >
-        <X size={9} />
+        <X size={12} />
       </button>
     </div>
   );
