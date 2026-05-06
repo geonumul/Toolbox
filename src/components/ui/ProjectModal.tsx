@@ -9,6 +9,22 @@ import { uploadFileToCloudinary } from '../../utils/uploadService';
 import { EditableField } from './EditableField';
 import { formatAuthors, normalizeAuthors } from '../../utils/authors';
 
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 const FALLBACK_AUTHORS = [
   'Ko Geon', 'Park Kyeong-jun', 'Yoo Seung-min', 'Ryu Hyun-jung',
   'Yang Hyung-seok', 'Kwon Si-hyun', 'Kim Ji-eun', 'Shim Jung-eun',
@@ -200,6 +216,23 @@ export const ProjectModal = ({
     setCurrentImageIndex(prev => Math.min(prev, Math.max(0, newImages.length - 1)));
   };
 
+  const handleReorderImages = (oldIndex: number, newIndex: number) => {
+    if (!onUpdate) return;
+    if (oldIndex === newIndex) return;
+    const reordered = arrayMove(imageList, oldIndex, newIndex);
+    const updates = { images: reordered, image: reordered[0], pdfUrl: reordered[0] };
+    onUpdate(updates);
+    if (onAutoSave) onAutoSave(updates);
+    // Keep the same image visible after reorder.
+    if (currentImageIndex === oldIndex) {
+      setCurrentImageIndex(newIndex);
+    } else if (oldIndex < currentImageIndex && newIndex >= currentImageIndex) {
+      setCurrentImageIndex(currentImageIndex - 1);
+    } else if (oldIndex > currentImageIndex && newIndex <= currentImageIndex) {
+      setCurrentImageIndex(currentImageIndex + 1);
+    }
+  };
+
   const handleAttachmentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -252,7 +285,7 @@ export const ProjectModal = ({
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.96, opacity: 0 }}
-        className="bg-white w-full h-full md:max-w-[95vw] md:h-[92vh] md:rounded-2xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden"
+        className="bg-white w-full h-full md:w-[88vw] md:h-[82vh] md:max-w-[1200px] md:max-h-[760px] md:rounded-2xl shadow-2xl flex flex-col md:flex-row relative overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onDragOver={(e) => { if (isEditing) { e.preventDefault(); setIsDragOver(true); } }}
         onDragLeave={() => setIsDragOver(false)}
@@ -371,7 +404,7 @@ export const ProjectModal = ({
               {imageList.length > 1 && (
                 <div
                   className="absolute left-1/2 -translate-x-1/2 z-30 flex gap-1.5 bg-black/40 backdrop-blur px-3 py-2 rounded-full"
-                  style={{ bottom: isEditing ? '88px' : '16px' }}
+                  style={{ bottom: isEditing ? '110px' : '16px' }}
                 >
                   {imageList.map((_, i) => (
                     <button
@@ -385,55 +418,21 @@ export const ProjectModal = ({
             </>
           )}
 
-          {/* Edit thumbnail strip */}
-          {isEditing && imageList.length > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/95 via-black/70 to-transparent z-20">
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-white/80 whitespace-nowrap flex items-center gap-1">
-                  <ImageIcon size={11} /> {imageList.length}/{MAX_IMAGES}
-                </span>
-                <div className="flex gap-2 overflow-x-auto flex-1 pb-1 custom-scrollbar-dark">
-                  {imageList.map((img, i) => (
-                    <div
-                      key={i}
-                      onClick={() => setCurrentImageIndex(i)}
-                      className={`relative flex-shrink-0 w-14 h-14 rounded overflow-hidden border-2 cursor-pointer transition-all ${i === currentImageIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                    >
-                      <img src={img} className="w-full h-full object-cover" alt="" />
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleRemoveImage(i); }}
-                        className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-0.5 rounded-bl"
-                        aria-label="Remove image"
-                      >
-                        <X size={9} />
-                      </button>
-                    </div>
-                  ))}
-
-                  {isUploading ? (
-                    <div className="flex-shrink-0 w-14 h-14 rounded border border-white/30 flex flex-col items-center justify-center gap-1 bg-black/50">
-                      <div className="w-10 bg-white/20 rounded-full h-1">
-                        <div className="bg-white h-1 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
-                      </div>
-                      <span className="text-[8px] text-white font-bold">
-                        {uploadCount.total > 1 ? `${uploadCount.current}/${uploadCount.total}` : `${uploadProgress}%`}
-                      </span>
-                    </div>
-                  ) : imageList.length < MAX_IMAGES ? (
-                    <label className="flex-shrink-0 w-14 h-14 rounded border-2 border-dashed border-white/40 flex items-center justify-center cursor-pointer hover:border-white text-white/70 hover:text-white transition">
-                      <Plus size={18} />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={handleImagePicker}
-                      />
-                    </label>
-                  ) : null}
-                </div>
-              </div>
-            </div>
+          {/* Edit thumbnail strip — always visible in edit mode, even before
+              the first image is uploaded. Solid background so it's never lost
+              against a busy image. */}
+          {isEditing && (
+            <ThumbnailStrip
+              imageList={imageList}
+              currentImageIndex={currentImageIndex}
+              isUploading={isUploading}
+              uploadProgress={uploadProgress}
+              uploadCount={uploadCount}
+              onSelect={setCurrentImageIndex}
+              onRemove={handleRemoveImage}
+              onPick={handleImagePicker}
+              onReorder={handleReorderImages}
+            />
           )}
         </div>
 
@@ -602,3 +601,135 @@ export const ProjectModal = ({
     </motion.div>
   );
 };
+
+// ────────── Sortable thumbnail strip ──────────
+
+interface ThumbnailStripProps {
+  imageList: string[];
+  currentImageIndex: number;
+  isUploading: boolean;
+  uploadProgress: number;
+  uploadCount: { current: number; total: number };
+  onSelect: (i: number) => void;
+  onRemove: (i: number) => void;
+  onPick: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onReorder: (oldIndex: number, newIndex: number) => void;
+}
+
+function ThumbnailStrip({
+  imageList, currentImageIndex, isUploading, uploadProgress, uploadCount,
+  onSelect, onRemove, onPick, onReorder,
+}: ThumbnailStripProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = Number(active.id);
+    const newIndex = Number(over.id);
+    if (Number.isNaN(oldIndex) || Number.isNaN(newIndex)) return;
+    onReorder(oldIndex, newIndex);
+  };
+
+  return (
+    <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/85 backdrop-blur-sm border-t border-white/10 z-20">
+      <div className="flex items-center gap-3">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-white/80 whitespace-nowrap flex items-center gap-1">
+          <ImageIcon size={11} /> {imageList.length}/{MAX_IMAGES}
+        </span>
+
+        <div className="flex gap-2 overflow-x-auto flex-1 pb-1">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={imageList.map((_, i) => i)} strategy={horizontalListSortingStrategy}>
+              <div className="flex gap-2">
+                {imageList.map((img, i) => (
+                  <SortableThumbnail
+                    key={`${img}-${i}`}
+                    index={i}
+                    src={img}
+                    active={i === currentImageIndex}
+                    onSelect={() => onSelect(i)}
+                    onRemove={() => onRemove(i)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          {isUploading ? (
+            <div className="flex-shrink-0 w-14 h-14 rounded border border-white/30 flex flex-col items-center justify-center gap-1 bg-black/50">
+              <div className="w-10 bg-white/20 rounded-full h-1">
+                <div className="bg-white h-1 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+              </div>
+              <span className="text-[8px] text-white font-bold">
+                {uploadCount.total > 1 ? `${uploadCount.current}/${uploadCount.total}` : `${uploadProgress}%`}
+              </span>
+            </div>
+          ) : imageList.length < MAX_IMAGES ? (
+            <label
+              className="flex-shrink-0 w-14 h-14 rounded border-2 border-dashed border-white/40 flex items-center justify-center cursor-pointer hover:border-white hover:bg-white/5 text-white/70 hover:text-white transition"
+              title="이미지 추가"
+            >
+              <Plus size={18} />
+              <input type="file" accept="image/*" multiple className="hidden" onChange={onPick} />
+            </label>
+          ) : null}
+        </div>
+      </div>
+      {imageList.length > 1 && (
+        <p className="text-[9px] text-white/40 font-mono mt-1.5 ml-1">
+          썸네일을 드래그해서 순서를 바꿀 수 있어요
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface SortableThumbnailProps {
+  index: number;
+  src: string;
+  active: boolean;
+  onSelect: () => void;
+  onRemove: () => void;
+}
+
+function SortableThumbnail({ index, src, active, onSelect, onRemove }: SortableThumbnailProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: index });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={onSelect}
+      className={`relative flex-shrink-0 w-14 h-14 rounded overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all touch-none ${
+        active ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
+      }`}
+    >
+      <img
+        src={src}
+        className="w-full h-full object-cover pointer-events-none select-none"
+        alt=""
+        draggable={false}
+        onDragStart={(e) => e.preventDefault()}
+      />
+      <button
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-0.5 rounded-bl"
+        aria-label="Remove image"
+      >
+        <X size={9} />
+      </button>
+    </div>
+  );
+}
