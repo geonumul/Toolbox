@@ -776,9 +776,19 @@ export const SecretPage = ({ onExit }: { onExit: () => void }) => {
         <rect width="100%" height="100%" fill="url(#sg2)" />
       </svg>
 
-      {/* Full-screen camera (very low opacity, ambient only). Mapping uses
-          the rendered rect, so hand reaches the entire viewport. */}
-      <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.12 }}>
+      {/* Camera sized to the largest 4:3 rectangle that fits in the viewport
+          (with a small margin). Aspect-locked so the visible video matches
+          1:1 with the hand-mapping rect — no zoom-crop, no dead space. */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(94vw, calc(88vh * 4 / 3))',
+          aspectRatio: '4 / 3',
+          opacity: 0.13,
+        }}
+      >
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
