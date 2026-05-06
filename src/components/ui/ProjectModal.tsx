@@ -320,7 +320,7 @@ export const ProjectModal = ({
         </AnimatePresence>
 
         {/* ────────── LEFT: Image carousel ────────── */}
-        <div className="w-full h-[55vh] md:w-[65%] lg:w-[68%] md:h-full bg-neutral-950 relative overflow-hidden flex flex-col group/carousel">
+        <div className="w-full aspect-[4/3] md:aspect-auto md:w-[65%] lg:w-[68%] md:h-full flex-shrink-0 bg-neutral-950 relative overflow-hidden flex flex-col group/carousel">
           {/* Image area — flex-1 takes remaining height above the strip */}
           <div className="flex-1 min-h-0 min-w-0 relative overflow-hidden">
           {imageList.length === 0 ? (
