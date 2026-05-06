@@ -383,6 +383,7 @@ export const ProjectModal = ({
                 <>
                   {currentImageIndex > 0 && (
                     <button
+                      onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => i - 1); }}
                       className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 bg-white/90 hover:bg-white rounded-full shadow-xl flex items-center justify-center md:opacity-0 md:group-hover/carousel:opacity-100 transition-all hover:scale-105 active:scale-95"
                       aria-label="Previous image"
@@ -392,6 +393,7 @@ export const ProjectModal = ({
                   )}
                   {currentImageIndex < imageList.length - 1 && (
                     <button
+                      onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i => i + 1); }}
                       className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 bg-white/90 hover:bg-white rounded-full shadow-xl flex items-center justify-center md:opacity-0 md:group-hover/carousel:opacity-100 transition-all hover:scale-105 active:scale-95"
                       aria-label="Next image"
@@ -407,10 +409,12 @@ export const ProjectModal = ({
                 <div
                   className="absolute left-1/2 -translate-x-1/2 z-30 flex gap-1.5 bg-black/40 backdrop-blur px-3 py-2 rounded-full"
                   style={{ bottom: '16px' }}
+                  onPointerDown={(e) => e.stopPropagation()}
                 >
                   {imageList.map((_, i) => (
                     <button
                       key={i}
+                      onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i); }}
                       className={`rounded-full transition-all ${i === currentImageIndex ? 'w-6 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'}`}
                     />
