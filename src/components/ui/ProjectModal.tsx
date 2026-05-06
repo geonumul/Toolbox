@@ -309,15 +309,17 @@ export const ProjectModal = ({
             </div>
           ) : (
             <>
-              {/* Image (swipe-able) */}
-              <div className="flex-1 relative overflow-hidden flex items-center justify-center">
+              {/* Image (swipe-able). min-h-0 prevents the flex child from
+                  expanding past its allotted track when an image is taller
+                  than the carousel area. */}
+              <div className="flex-1 min-h-0 min-w-0 relative overflow-hidden">
                 <motion.div
                   drag={imageList.length > 1 ? 'x' : false}
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.18}
                   dragSnapToOrigin
                   onDragEnd={handleSwipe}
-                  className={`flex items-center justify-center w-full h-full ${imageList.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                  className={`absolute inset-0 flex items-center justify-center p-4 ${imageList.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
                 >
                   <motion.img
                     key={currentImageIndex}
@@ -328,7 +330,7 @@ export const ProjectModal = ({
                       ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
                       : currentImage}
                     alt={project.title}
-                    className="max-w-full max-h-full w-auto h-auto object-contain select-none pointer-events-none"
+                    className="max-w-full max-h-full object-contain select-none pointer-events-none"
                     draggable={false}
                   />
                 </motion.div>
