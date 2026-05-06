@@ -51,9 +51,9 @@ function AuthorMultiSelect({ value, teamData, onChange }: {
   };
 
   return (
-    <div className="-mx-1 px-1 py-1 bg-black/5 rounded">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 px-1">
-        Authors {selected.length > 0 && <span className="text-gray-600">({selected.length})</span>}
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-2">
+        Authors {selected.length > 0 && <span className="text-gray-700">({selected.length})</span>}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {options.map(name => {
@@ -63,7 +63,7 @@ function AuthorMultiSelect({ value, teamData, onChange }: {
               key={name}
               type="button"
               onClick={() => toggle(name)}
-              className={`px-2.5 py-1 text-[11px] rounded-full font-mono transition-all ${
+              className={`px-2.5 py-1 text-[11px] leading-none rounded-full font-mono whitespace-nowrap transition-all ${
                 active
                   ? 'bg-black text-white shadow-sm'
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -319,8 +319,10 @@ export const ProjectModal = ({
 
         {/* ────────── LEFT: Image carousel ────────── */}
         <div className="w-full h-[55vh] md:w-[65%] lg:w-[68%] md:h-full bg-neutral-950 relative overflow-hidden flex flex-col group/carousel">
+          {/* Image area — flex-1 takes remaining height above the strip */}
+          <div className="flex-1 min-h-0 min-w-0 relative overflow-hidden">
           {imageList.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center p-8">
+            <div className="absolute inset-0 flex items-center justify-center p-8">
               {isEditing ? (
                 <label className="cursor-pointer text-center text-white/70 hover:text-white transition">
                   <div className="w-32 h-32 mx-auto mb-4 rounded-2xl border-2 border-dashed border-white/30 flex items-center justify-center">
@@ -342,33 +344,28 @@ export const ProjectModal = ({
             </div>
           ) : (
             <>
-              {/* Image (swipe-able). The thumbnail strip is now a compact
-                  bottom-left corner widget, so the image can use the full
-                  carousel area. */}
-              <div className="flex-1 min-h-0 min-w-0 relative overflow-hidden">
-                <motion.div
-                  drag={imageList.length > 1 ? 'x' : false}
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.18}
-                  dragSnapToOrigin
-                  onDragEnd={handleSwipe}
-                  className={`absolute inset-0 flex items-center justify-center p-4 ${imageList.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                >
-                  <motion.img
-                    key={currentImageIndex}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.18 }}
-                    src={currentImage && /\.pdf(\?|$)/i.test(currentImage)
-                      ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
-                      : currentImage}
-                    alt={project.title}
-                    style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }}
-                    className="object-contain select-none pointer-events-none"
-                    draggable={false}
-                  />
-                </motion.div>
-              </div>
+              <motion.div
+                drag={imageList.length > 1 ? 'x' : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.18}
+                dragSnapToOrigin
+                onDragEnd={handleSwipe}
+                className={`absolute inset-0 flex items-center justify-center p-4 ${imageList.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+              >
+                <motion.img
+                  key={currentImageIndex}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.18 }}
+                  src={currentImage && /\.pdf(\?|$)/i.test(currentImage)
+                    ? currentImage.replace('/upload/', '/upload/pg_1,f_jpg/')
+                    : currentImage}
+                  alt={project.title}
+                  style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto' }}
+                  className="object-contain select-none pointer-events-none"
+                  draggable={false}
+                />
+              </motion.div>
 
               {/* Counter pill */}
               {imageList.length > 1 && (
@@ -418,10 +415,9 @@ export const ProjectModal = ({
               )}
             </>
           )}
+          </div>
 
-          {/* Edit thumbnail strip — always visible in edit mode, even before
-              the first image is uploaded. Solid background so it's never lost
-              against a busy image. */}
+          {/* Thumbnail strip — real flex child below the image area in edit mode */}
           {isEditing && (
             <ThumbnailStrip
               imageList={imageList}
@@ -635,46 +631,48 @@ function ThumbnailStrip({
   };
 
   return (
-    <div
-      className="absolute bottom-3 left-3 z-20 flex items-center gap-2 p-2 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 shadow-2xl"
-      style={{ maxWidth: 'calc(100% - 24px)' }}
-    >
-      <div className="flex gap-1.5 overflow-x-auto pb-0.5 max-w-[60vw] md:max-w-[420px]">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={imageList.map((_, i) => i)} strategy={horizontalListSortingStrategy}>
-            <div className="flex gap-1.5">
-              {imageList.map((img, i) => (
-                <SortableThumbnail
-                  key={`${img}-${i}`}
-                  index={i}
-                  src={img}
-                  active={i === currentImageIndex}
-                  onSelect={() => onSelect(i)}
-                  onRemove={() => onRemove(i)}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+    <div className="flex-shrink-0 bg-black/95 border-t border-white/10 px-3 py-2.5">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-white/70 whitespace-nowrap flex items-center gap-1 mr-1">
+          <ImageIcon size={11} /> {imageList.length}/{MAX_IMAGES}
+        </span>
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 flex-1">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={imageList.map((_, i) => i)} strategy={horizontalListSortingStrategy}>
+              <div className="flex gap-1.5">
+                {imageList.map((img, i) => (
+                  <SortableThumbnail
+                    key={`${img}-${i}`}
+                    index={i}
+                    src={img}
+                    active={i === currentImageIndex}
+                    onSelect={() => onSelect(i)}
+                    onRemove={() => onRemove(i)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
 
-        {isUploading ? (
-          <div className="flex-shrink-0 w-11 h-11 rounded-md border border-white/30 flex flex-col items-center justify-center gap-1 bg-black/50">
-            <div className="w-7 bg-white/20 rounded-full h-1">
-              <div className="bg-white h-1 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+          {isUploading ? (
+            <div className="flex-shrink-0 w-9 h-9 rounded-md border border-white/30 flex flex-col items-center justify-center gap-0.5 bg-black/50">
+              <div className="w-6 bg-white/20 rounded-full h-0.5">
+                <div className="bg-white h-0.5 rounded-full transition-all" style={{ width: `${uploadProgress}%` }} />
+              </div>
+              <span className="text-[7px] text-white font-bold">
+                {uploadCount.total > 1 ? `${uploadCount.current}/${uploadCount.total}` : `${uploadProgress}%`}
+              </span>
             </div>
-            <span className="text-[8px] text-white font-bold">
-              {uploadCount.total > 1 ? `${uploadCount.current}/${uploadCount.total}` : `${uploadProgress}%`}
-            </span>
-          </div>
-        ) : imageList.length < MAX_IMAGES ? (
-          <label
-            className="flex-shrink-0 w-11 h-11 rounded-md border-2 border-dashed border-white/40 flex items-center justify-center cursor-pointer hover:border-white hover:bg-white/5 text-white/70 hover:text-white transition"
-            title="이미지 추가"
-          >
-            <Plus size={16} />
-            <input type="file" accept="image/*" multiple className="hidden" onChange={onPick} />
-          </label>
-        ) : null}
+          ) : imageList.length < MAX_IMAGES ? (
+            <label
+              className="flex-shrink-0 w-9 h-9 rounded-md border-2 border-dashed border-white/40 flex items-center justify-center cursor-pointer hover:border-white hover:bg-white/5 text-white/70 hover:text-white transition"
+              title="이미지 추가"
+            >
+              <Plus size={14} />
+              <input type="file" accept="image/*" multiple className="hidden" onChange={onPick} />
+            </label>
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -704,7 +702,7 @@ function SortableThumbnail({ index, src, active, onSelect, onRemove }: SortableT
       {...attributes}
       {...listeners}
       onClick={onSelect}
-      className={`relative flex-shrink-0 w-11 h-11 rounded-md overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all touch-none ${
+      className={`relative flex-shrink-0 w-9 h-9 rounded-md overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all touch-none ${
         active ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
       }`}
     >
