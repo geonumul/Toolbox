@@ -521,10 +521,16 @@ export const useData = () => {
     );
   };
 
-  const updateConfig = (key: string, value: string) => {
+  // Accepts either updateConfig("key", "value") or updateConfig({ key: value, ... })
+  const updateConfig = (keyOrObject: string | Record<string, any>, value?: string) => {
+    const patch =
+      typeof keyOrObject === "string"
+        ? { [keyOrObject]: value }
+        : keyOrObject;
+
     const updated = {
       ...data,
-      config: { ...data.config, [key]: value },
+      config: { ...data.config, ...patch },
     };
     setData(updated);
     localStorage.setItem(

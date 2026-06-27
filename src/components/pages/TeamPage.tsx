@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Mail, Plus, Trash2, Edit3, Instagram, Linkedin, Github, Upload } from "lucide-react";
 import { db } from '../../firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useDragAndDrop } from '../../utils/useDragAndDrop';
 
 interface TeamPageProps {
   data: any[];
@@ -125,11 +126,28 @@ export const TeamPage = ({
   const members = data.filter((m) => !m.alumni);
   const alumni = data.filter((m) => m.alumni === true);
 
+  // Drag a card between the Members and Alumni sections (edit mode only).
+  const handleMoveMember = (id: string | number, zoneId: string) => {
+    const member = data.find((m) => m.id === id);
+    if (!member) return;
+    const shouldBeAlumni = zoneId === "alumni";
+    if (Boolean(member.alumni) === shouldBeAlumni) return; // already in zone
+    handleUpdateMember(id, { ...member, alumni: shouldBeAlumni });
+  };
+
+  const { draggingId, overZoneId, getDragProps, getZoneProps } = useDragAndDrop({
+    onDrop: handleMoveMember,
+    enabled: isEditing,
+  });
+
   const renderMemberCard = (member: any) => (
     <div
       key={member.id}
       onClick={() => setSelectedMemberId(member.id)}
-      className="group cursor-pointer flex flex-col relative"
+      {...getDragProps(member.id)}
+      className={`group cursor-pointer flex flex-col relative transition-opacity ${
+        draggingId === member.id ? "opacity-40" : ""
+      }`}
     >
       {isEditing && (
         <button
@@ -179,7 +197,12 @@ export const TeamPage = ({
         </div>
 
         {/* Members Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
+        <div
+          {...getZoneProps("members")}
+          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16 transition-all rounded-lg ${
+            overZoneId === "members" ? "ring-2 ring-black ring-offset-8 bg-gray-50" : ""
+          }`}
+        >
           {members.map((member) => renderMemberCard(member))}
 
           {isEditing && (
@@ -214,7 +237,12 @@ export const TeamPage = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
+            <div
+              {...getZoneProps("alumni")}
+              className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16 transition-all rounded-lg ${
+                overZoneId === "alumni" ? "ring-2 ring-black ring-offset-8 bg-gray-50" : ""
+              }`}
+            >
               {alumni.map((member) => renderMemberCard(member))}
 
               {isEditing && (
